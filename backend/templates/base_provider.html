@@ -55,7 +55,7 @@
 {% with n=request.resolver_match.url_name %}
 <aside class="hidden lg:flex fixed left-0 top-32 h-[calc(100vh-8rem)] w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex-col justify-between py-space-md">
   <nav class="space-y-space-xs px-space-md">
-    <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Tableau de bord</a>
+    <a href="{% url 'provider_dashboard' %}" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Tableau de bord</a>
     <a href="{% url 'service_list' %}" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_list' or n == 'service_update' or n == 'service_delete' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Mes services</a>
     <a href="{% url 'service_create' %}" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_create' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Ajouter un service</a>
     <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Mes interventions</a>

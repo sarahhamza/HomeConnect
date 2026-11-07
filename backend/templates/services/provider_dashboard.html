@@ -1,0 +1,348 @@
+{% extends "base_provider.html" %}
+{% block title %}Tableau de bord · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="flex flex-col w-full space-y-8">
+
+  <!-- ===== EN-TÊTE PRESTATAIRE ===== -->
+  <div class="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm p-6 sm:p-8">
+    <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-surface-container-low blur-3xl pointer-events-none"></div>
+    <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+        <div class="relative flex-shrink-0">
+          <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-primary text-on-primary flex items-center justify-center font-headline-xl text-headline-xl shadow-sm uppercase">
+            {{ user.username|slice:":1" }}
+          </div>
+          <span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-sm" title="Profil HomeConnect">
+            <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+          </span>
+        </div>
+        <div class="space-y-1.5">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">{{ user.get_full_name|default:user.username }}</h1>
+            <span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Prestataire
+            </span>
+          </div>
+          <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-on-surface-variant font-body-sm text-body-sm">
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[17px] text-primary">handyman</span>
+              {{ total }} service{{ total|pluralize }} · {{ published }} publié{{ published|pluralize }}
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[17px] text-on-surface-variant">event_available</span>
+              {{ completed_count }} intervention{{ completed_count|pluralize }} terminée{{ completed_count|pluralize }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-surface-container-low p-3.5 rounded-xl">
+        <div class="flex items-center gap-2 px-3 py-2 bg-surface-container-lowest rounded-lg shadow-sm">
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+          </span>
+          <div class="flex flex-col">
+            <span class="font-label-md text-label-md text-on-surface font-semibold leading-tight">En ligne</span>
+            <span class="font-label-sm text-label-sm text-secondary font-medium leading-tight">{{ published }} service{{ published|pluralize }} visible{{ published|pluralize }}</span>
+          </div>
+        </div>
+        <a href="{% url 'service_create' %}" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-container transition-colors text-on-primary font-label-lg text-label-lg shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">add</span>Ajouter un service
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== KPI ===== -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div class="space-y-1">
+          <p class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-medium">Demandes en attente</p>
+          <div class="flex items-baseline gap-2">
+            <span class="font-headline-xl text-headline-xl text-primary font-bold">{{ pending_count }}</span>
+            <span class="font-body-sm text-body-sm text-on-surface-variant font-medium">à traiter</span>
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+          <span class="material-symbols-outlined text-[22px]">notification_important</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3">
+        <a href="#demandes" class="font-label-sm text-label-sm text-primary font-semibold hover:underline">Voir les demandes</a>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div class="space-y-1">
+          <p class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-medium">Planning du jour</p>
+          <div class="flex items-baseline gap-2">
+            <span class="font-headline-xl text-headline-xl text-on-surface font-bold">{{ today_appointments|length }}</span>
+            <span class="font-body-sm text-body-sm text-on-surface-variant">intervention{{ today_appointments|length|pluralize }}</span>
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-surface-container text-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-[22px]">event_available</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3">
+        <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#D1FAE5] text-[#059669] font-semibold">Confirmées</span>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div class="space-y-1">
+          <p class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-medium">Mes services</p>
+          <div class="flex items-baseline gap-2">
+            <span class="font-headline-xl text-headline-xl text-on-surface font-bold">{{ published }}</span>
+            <span class="font-body-sm text-body-sm text-outline">/ {{ total }} publiés</span>
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-[22px]">handyman</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 flex items-center gap-2">
+        <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">{{ drafts }} brouillon{{ drafts|pluralize }}</span>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+      <div class="flex items-start justify-between">
+        <div class="space-y-1">
+          <p class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-medium">Revenus du mois</p>
+          <div class="flex items-baseline gap-1">
+            <span class="font-headline-xl text-headline-xl text-secondary font-bold">{{ month_revenue|floatformat:2 }}</span>
+            <span class="font-headline-sm text-headline-sm text-secondary font-bold">DT</span>
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-[22px]">payments</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3">
+        <span class="font-body-sm text-body-sm text-outline">Interventions terminées ce mois-ci</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GRILLE PRINCIPALE ===== -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Colonne gauche -->
+    <div class="lg:col-span-8 space-y-6">
+
+      <!-- Demandes en attente -->
+      <div id="demandes" class="bg-surface-container-lowest rounded-xl p-6 shadow-sm space-y-5 scroll-mt-36">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]">flash_on</span>
+          </div>
+          <div>
+            <h2 class="font-headline-md text-headline-md text-primary font-bold">Demandes de réservation</h2>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Clients en attente de votre réponse</p>
+          </div>
+        </div>
+
+        {% for a in pending_requests %}
+        <div class="bg-surface-container-low rounded-xl p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-full bg-primary-container text-on-primary font-bold flex items-center justify-center uppercase">
+                {{ a.client.username|slice:":2" }}
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">{{ a.client.get_full_name|default:a.client.username }}</h3>
+                  <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold">{{ a.service.get_category_display }}</span>
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                  <span class="material-symbols-outlined text-[15px] text-primary">location_on</span>{{ a.service.base_city }}
+                </p>
+              </div>
+            </div>
+            <span class="self-start sm:self-auto font-label-sm text-label-sm px-3 py-1.5 rounded-lg bg-[#FEF3C7] text-[#92400E] font-bold">{{ a.get_status_display }}</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-surface-container-lowest p-3.5 rounded-lg">
+            <div>
+              <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Prestation</p>
+              <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ a.service.name }}</p>
+            </div>
+            <div>
+              <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Date souhaitée</p>
+              <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ a.date|date:"d/m/Y" }}</p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">{{ a.get_slot_display }}</p>
+            </div>
+            <div class="flex flex-col justify-center sm:items-end">
+              <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Montant</p>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <span class="font-headline-md text-headline-md text-secondary font-bold">{{ a.total_price }}</span>
+                <span class="font-body-lg text-body-lg text-secondary font-bold">DT</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-8 bg-surface-container-low rounded-xl">
+          <span class="material-symbols-outlined text-[36px] text-on-surface-variant">inbox</span>
+          <p class="text-on-surface-variant mt-2">Aucune demande en attente pour le moment.</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Derniers services -->
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm space-y-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-headline-md text-headline-md text-primary font-bold">Mes derniers services</h2>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Aperçu de votre catalogue</p>
+          </div>
+          <a href="{% url 'service_list' %}" class="font-label-md text-label-md text-primary font-semibold hover:underline flex items-center gap-1">
+            Tout voir<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </a>
+        </div>
+
+        <div class="divide-y divide-surface-container">
+          {% for s in recent %}
+          <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl bg-surface-container-low text-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">
+                  {% if s.category == 'plomberie' %}plumbing{% elif s.category == 'electricite' %}bolt{% elif s.category == 'serrurerie' %}lock_open{% elif s.category == 'peinture' %}format_paint{% elif s.category == 'chauffage' %}hvac{% elif s.category == 'jardinage' %}yard{% else %}handyman{% endif %}
+                </span>
+              </div>
+              <div class="min-w-0">
+                <p class="font-label-lg text-label-lg text-on-surface truncate">{{ s.name }}</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">{{ s.get_category_display }} · {{ s.base_city }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="font-label-lg text-label-lg text-primary font-bold">{{ s.price }} DT</span>
+              <span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full font-semibold {% if s.is_active %}bg-[#D1FAE5] text-[#059669]{% else %}bg-surface-container text-on-surface-variant{% endif %}">
+                {% if s.is_active %}Publié{% else %}Brouillon{% endif %}
+              </span>
+              <a href="{% url 'service_update' s.pk %}" class="p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-primary" title="Modifier">
+                <span class="material-symbols-outlined text-[20px]">edit</span>
+              </a>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-8">
+            <p class="text-on-surface-variant mb-3">Vous n'avez pas encore créé de service.</p>
+            <a href="{% url 'service_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-lg shadow-sm hover:opacity-95">
+              <span class="material-symbols-outlined text-[18px]">add</span>Créer mon premier service
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne droite -->
+    <div class="lg:col-span-4 space-y-6">
+
+      <!-- Planning du jour -->
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm space-y-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[22px] text-primary">calendar_today</span>
+            <h2 class="font-headline-sm text-headline-sm text-primary font-bold">Planning d'aujourd'hui</h2>
+          </div>
+          <span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface font-semibold">{{ today|date:"d/m" }}</span>
+        </div>
+
+        {% if today_appointments %}
+        <div class="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container-high">
+          {% for a in today_appointments %}
+          <div class="relative group">
+            <span class="absolute -left-6 top-1 w-3 h-3 rounded-full bg-secondary ring-4 ring-surface-container-lowest"></span>
+            <div class="bg-surface-container-low p-3.5 rounded-xl space-y-2 group-hover:bg-surface-container transition-colors">
+              <div class="flex items-center justify-between">
+                <span class="font-label-md text-label-md font-bold text-primary">{{ a.get_slot_display }}</span>
+                <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#D1FAE5] text-[#059669] font-semibold">{{ a.get_status_display }}</span>
+              </div>
+              <div>
+                <h4 class="font-body-md text-body-md font-bold text-on-surface">{{ a.service.name }}</h4>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">{{ a.client.get_full_name|default:a.client.username }} · {{ a.service.base_city }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-surface-container-lowest border-2 border-dashed border-surface-container-high p-4 rounded-xl text-center">
+          <p class="font-body-md text-on-surface-variant">Aucune intervention prévue aujourd'hui.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- À venir -->
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm space-y-4">
+        <h3 class="font-headline-sm text-headline-sm text-primary font-bold">Prochaines interventions</h3>
+        {% for a in upcoming_appointments %}
+        <div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low">
+          <div class="min-w-0">
+            <p class="font-label-lg text-label-lg text-on-surface font-semibold truncate">{{ a.service.name }}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">{{ a.date|date:"d/m/Y" }} · {{ a.get_slot_display }}</p>
+          </div>
+          <span class="font-label-md text-label-md text-primary font-bold shrink-0 ml-2">{{ a.total_price }} DT</span>
+        </div>
+        {% empty %}
+        <p class="text-on-surface-variant font-body-sm">Aucune intervention confirmée à venir.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Raccourcis -->
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm space-y-4">
+        <h3 class="font-headline-sm text-headline-sm text-primary font-bold">Raccourcis</h3>
+        <div class="space-y-2">
+          <a class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all group" href="{% url 'service_create' %}">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-surface-container text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors"><span class="material-symbols-outlined text-[20px]">add_circle</span></div>
+              <div>
+                <p class="font-label-lg text-label-lg text-on-surface font-semibold">Ajouter un service</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Publier une nouvelle prestation</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
+          </a>
+          <a class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all group" href="{% url 'service_list' %}">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-surface-container text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit_note</span></div>
+              <div>
+                <p class="font-label-lg text-label-lg text-on-surface font-semibold">Gérer mes services</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Modifier, publier ou supprimer</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
+          </a>
+          <a class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all group" href="{% url 'profile' %}">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-surface-container text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors"><span class="material-symbols-outlined text-[20px]">manage_accounts</span></div>
+              <div>
+                <p class="font-label-lg text-label-lg text-on-surface font-semibold">Profil professionnel</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Mettre à jour mes informations</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-surface-container-low rounded-xl p-5 shadow-sm space-y-2">
+        <div class="flex items-center gap-2 text-secondary">
+          <span class="material-symbols-outlined text-[20px]">verified</span>
+          <span class="font-label-lg text-label-lg font-bold">Paiement sécurisé</span>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Les fonds sont consignés sous séquestre jusqu'à la validation de l'intervention par le client.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

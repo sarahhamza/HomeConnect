@@ -40,7 +40,7 @@ class ClientDashboardView(ClientRequiredMixin, TemplateView):
         category = self.request.GET.get("category", "")
         if q:
             services = services.filter(Q(name__icontains=q) | Q(base_city__icontains=q)
-                                       | Q(description__icontains=q))
+                                        | Q(description__icontains=q))
         if category in Service.Category.values:
             services = services.filter(category=category)
 
