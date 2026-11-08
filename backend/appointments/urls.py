@@ -4,5 +4,5 @@ from . import views
 urlpatterns = [
     path("", views.ClientDashboardView.as_view(), name="client_dashboard"),
     path("reserver/<int:service_id>/", views.AppointmentCreateView.as_view(), name="appointment_create"),
-    path("reservations/<int:pk>/annuler/", views.AppointmentCancelView.as_view(), name="appointment_cancel"),
+    path("reservations/<int:id>/annuler/", views.AppointmentCancelView.as_view(), name="appointment_cancel"),
 ]

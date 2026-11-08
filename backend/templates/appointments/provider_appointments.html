@@ -1,0 +1,109 @@
+{% extends "base_provider.html" %}
+{% block title %}Mes interventions · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="flex flex-col w-full space-y-6">
+
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-primary">Mes interventions</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Les réservations de vos clients : confirmez, refusez ou clôturez-les ici.</p>
+  </div>
+
+  <!-- Filtres par statut -->
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="{% url 'provider_appointments' %}"
+       class="px-4 py-1.5 rounded-full font-label-md text-label-md flex items-center gap-2 transition-colors {% if not current_status %}bg-primary-container text-on-primary shadow-sm{% else %}bg-surface-container-lowest text-on-surface hover:bg-surface-container{% endif %}">
+      Toutes <span class="opacity-80">{{ total_count }}</span>
+    </a>
+    {% for value, label, n in tabs %}
+    <a href="?status={{ value }}"
+       class="px-4 py-1.5 rounded-full font-label-md text-label-md flex items-center gap-2 transition-colors {% if value == current_status %}bg-primary-container text-on-primary shadow-sm{% else %}bg-surface-container-lowest text-on-surface hover:bg-surface-container{% endif %}">
+      {{ label }} <span class="opacity-80">{{ n }}</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Liste -->
+  <div class="space-y-4">
+    {% for a in appointments %}
+    <article class="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 space-y-4">
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-11 h-11 rounded-full bg-primary-container text-on-primary font-bold flex items-center justify-center uppercase shrink-0">
+            {{ a.client.username|slice:":2" }}
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold truncate">{{ a.client.get_full_name|default:a.client.username }}</h3>
+              <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold">{{ a.service.get_category_display }}</span>
+              {% if a.urgent %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error text-on-error font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">emergency</span>Urgent</span>{% endif %}
+            </div>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">{{ a.service.name }}</p>
+          </div>
+        </div>
+        <span class="self-start sm:self-auto font-label-sm text-label-sm px-3 py-1.5 rounded-lg font-bold
+          {% if a.status == 'pending' %}bg-[#FEF3C7] text-[#92400E]
+          {% elif a.status == 'confirmed' %}bg-secondary-container text-on-secondary-container
+          {% elif a.status == 'completed' %}bg-[#D1FAE5] text-[#059669]
+          {% else %}bg-surface-container text-on-surface-variant{% endif %}">{{ a.get_status_display }}</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-surface-container-low p-4 rounded-lg">
+        <div>
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Date</p>
+          <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ a.date|date:"d/m/Y" }}</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">{{ a.get_time_slot_display }}</p>
+        </div>
+        <div class="md:col-span-2">
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Adresse</p>
+          <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5 flex items-start gap-1">
+            <span class="material-symbols-outlined text-[16px] text-primary mt-0.5">location_on</span>{{ a.address }}
+          </p>
+          {% if a.address_details or a.access_code %}
+          <p class="font-body-sm text-body-sm text-on-surface-variant">
+            {{ a.address_details }}{% if a.address_details and a.access_code %} · {% endif %}{% if a.access_code %}Code : {{ a.access_code }}{% endif %}
+          </p>
+          {% endif %}
+        </div>
+        <div class="md:text-right">
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Total estimé TTC</p>
+          <p class="font-headline-md text-headline-md text-secondary font-bold mt-0.5">{{ a.total_price }} <span class="font-body-lg">DT</span></p>
+        </div>
+      </div>
+
+      {% if a.description %}
+      <p class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low rounded-lg p-3">
+        <span class="font-semibold text-on-surface">Problème décrit :</span> {{ a.description }}
+      </p>
+      {% endif %}
+
+      {% if a.status == 'pending' or a.status == 'confirmed' %}
+      <form method="post" action="{% url 'provider_appointment_action' a.pk %}" class="flex flex-wrap justify-end gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% if a.status == 'pending' %}
+          <button name="action" value="refuse" onclick="return confirm('Refuser cette demande ?')"
+                  class="h-10 px-4 rounded-lg border border-outline-variant text-on-surface font-label-lg text-label-lg hover:bg-error-container transition">Refuser</button>
+          <button name="action" value="confirm"
+                  class="h-10 px-4 rounded-lg bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition flex items-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">check</span>Confirmer</button>
+        {% else %}
+          <button name="action" value="refuse" onclick="return confirm('Annuler cette intervention ?')"
+                  class="h-10 px-4 rounded-lg border border-outline-variant text-on-surface font-label-lg text-label-lg hover:bg-error-container transition">Annuler</button>
+          <button name="action" value="complete"
+                  class="h-10 px-4 rounded-lg bg-primary text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary-container transition flex items-center gap-1">
+            <span class="material-symbols-outlined text-[18px]">task_alt</span>Marquer terminée</button>
+        {% endif %}
+      </form>
+      {% endif %}
+    </article>
+    {% empty %}
+    <div class="text-center py-12 bg-surface-container-lowest rounded-xl shadow-sm">
+      <span class="material-symbols-outlined text-[40px] text-on-surface-variant">event_busy</span>
+      <p class="text-on-surface-variant mt-2">Aucune intervention{% if current_status %} avec ce statut{% endif %} pour le moment.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

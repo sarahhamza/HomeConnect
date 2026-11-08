@@ -27,7 +27,7 @@
         <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-surface-container-lowest"></span>
       </div>
       <a href="{% url 'profile' %}" class="flex items-center gap-space-sm pl-space-sm rounded-xl py-space-xs px-space-sm hover:bg-surface-container">
-        <div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-lg font-bold">{{ user.username|slice:":1"|upper }}</div>
+        {% if user.avatar %}<img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm">{% else %}<div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-lg font-bold">{{ user.username|slice:":1"|upper }}</div>{% endif %}
         <div class="hidden md:flex flex-col text-left">
           <span class="font-label-md text-label-md text-on-surface font-semibold">{{ user.get_full_name|default:user.username }}</span>
           <span class="font-label-sm text-label-sm text-secondary font-medium">{{ user.get_role_display }}</span>

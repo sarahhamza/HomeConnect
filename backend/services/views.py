@@ -4,6 +4,8 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
+from appointments.provider_views import provider_dashboard_context
+
 from .forms import ServiceForm
 from .models import Service
 
@@ -43,11 +45,8 @@ class ProviderDashboardView(ProviderRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        qs = Service.objects.filter(provider=self.request.user)
-        ctx["total"] = qs.count()
-        ctx["published"] = qs.filter(is_active=True).count()
-        ctx["drafts"] = qs.filter(is_active=False).count()
-        ctx["recent"] = qs[:5]
+        # total, published, drafts, recent + demandes, planning, revenus…
+        ctx.update(provider_dashboard_context(self.request.user))
         return ctx
 
 

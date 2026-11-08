@@ -1,0 +1,85 @@
+{% extends "base_client.html" %}
+{% block title %}{{ req.title }} · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl w-full mx-auto space-y-space-lg">
+  <a href="{% url 'request_list' %}" class="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:underline">
+    <span class="material-symbols-outlined text-[16px]">arrow_back</span>Mes demandes
+  </a>
+
+  <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg space-y-space-md">
+    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-sm">
+      <div>
+        <div class="flex items-center gap-space-sm flex-wrap">
+          <h1 class="font-headline-md text-headline-md text-primary font-bold">{{ req.title }}</h1>
+          <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold">{{ req.get_category_display }}</span>
+          {% if req.urgent %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error text-on-error font-semibold">Urgent</span>{% endif %}
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Publié le {{ req.created_at|date:"d/m/Y" }}</p>
+      </div>
+      <span class="self-start font-label-sm text-label-sm px-3 py-1.5 rounded-lg font-bold {% if req.status == 'open' %}bg-secondary-container text-on-secondary-container{% elif req.status == 'assigned' %}bg-[#D1FAE5] text-[#059669]{% else %}bg-surface-container text-on-surface-variant{% endif %}">{{ req.get_status_display }}</span>
+    </div>
+
+    <p class="font-body-md text-body-md text-on-surface whitespace-pre-line">{{ req.description }}</p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-md bg-surface-container-low rounded-lg p-space-md">
+      <div><p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Date souhaitée</p><p class="font-label-lg text-on-surface mt-0.5">{{ req.date|date:"d/m/Y" }} · {{ req.get_time_slot_display }}</p></div>
+      <div><p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Lieu</p><p class="font-label-lg text-on-surface mt-0.5">{{ req.city }} — {{ req.address }}</p></div>
+      <div><p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Budget indicatif</p><p class="font-label-lg text-on-surface mt-0.5">{% if req.budget %}{{ req.budget }} DT{% else %}Non précisé{% endif %}</p></div>
+    </div>
+
+    {% if req.is_open %}
+    <form method="post" action="{% url 'request_cancel' req.pk %}" class="flex justify-end">
+      {% csrf_token %}
+      <button onclick="return confirm('Annuler ce besoin ?')" class="h-10 px-space-md rounded-xl border border-outline-variant font-label-md hover:bg-error-container transition">Annuler ce besoin</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="space-y-space-md">
+    <h2 class="font-headline-sm text-headline-sm text-primary font-bold">Propositions reçues ({{ offers|length }})</h2>
+
+    {% for o in offers %}
+    <article class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg space-y-space-md">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+        <div class="flex items-center gap-space-md min-w-0">
+          <div class="w-11 h-11 rounded-full bg-primary-container text-on-primary font-bold flex items-center justify-center uppercase shrink-0">{{ o.provider.username|slice:":2" }}</div>
+          <div class="min-w-0">
+            <p class="font-label-lg text-label-lg text-on-surface font-semibold truncate">{{ o.provider.get_full_name|default:o.provider.username }}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ o.service.name }}</p>
+          </div>
+        </div>
+        <div class="text-left sm:text-right">
+          <p class="font-headline-md text-headline-md text-secondary font-bold">{{ o.price }} DT</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">{{ o.date|date:"d/m/Y" }} · {{ o.get_time_slot_display }}</p>
+        </div>
+      </div>
+
+      {% if o.message %}<p class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low rounded-lg p-space-sm whitespace-pre-line">{{ o.message }}</p>{% endif %}
+
+      {% if o.status == 'pending' and req.is_open %}
+      <form method="post" action="{% url 'offer_decision' o.pk %}" class="flex flex-wrap justify-end gap-space-sm">
+        {% csrf_token %}
+        <button name="action" value="decline" class="h-10 px-space-md rounded-xl border border-outline-variant font-label-lg text-label-lg hover:bg-error-container transition">Refuser</button>
+        <button name="action" value="accept" class="h-10 px-space-md rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition flex items-center gap-1">
+          <span class="material-symbols-outlined text-[18px]">check</span>Accepter et réserver</button>
+      </form>
+      {% else %}
+      <div class="flex justify-end">
+        <span class="font-label-sm text-label-sm px-3 py-1.5 rounded-lg font-bold {% if o.status == 'accepted' %}bg-[#D1FAE5] text-[#059669]{% else %}bg-surface-container text-on-surface-variant{% endif %}">{{ o.get_status_display }}</span>
+      </div>
+      {% endif %}
+    </article>
+    {% empty %}
+    <div class="text-center py-space-xl bg-surface-container-lowest rounded-xl shadow-sm">
+      <span class="material-symbols-outlined text-[40px] text-on-surface-variant">hourglass_top</span>
+      <p class="text-on-surface-variant mt-space-sm">Aucune proposition pour le moment. Les prestataires concernés sont notifiés de votre besoin.</p>
+    </div>
+    {% endfor %}
+
+    {% if req.status == 'assigned' %}
+    <a href="{% url 'client_dashboard' %}#reservations" class="inline-flex items-center gap-1 font-label-md text-primary hover:underline">Voir mon rendez-vous dans « Mes réservations »<span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base_provider.html" %}
+{% block title %}Proposer mes services · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl w-full mx-auto space-y-6">
+  <a href="{% url 'provider_requests' %}" class="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:underline">
+    <span class="material-symbols-outlined text-[16px]">arrow_back</span>Demandes clients
+  </a>
+
+  <section class="bg-surface-container-lowest rounded-xl shadow-sm p-6 space-y-3">
+    <div class="flex items-center gap-2 flex-wrap">
+      <h1 class="font-headline-md text-headline-md text-primary font-bold">{{ req.title }}</h1>
+      <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold">{{ req.get_category_display }}</span>
+      {% if req.urgent %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error text-on-error font-semibold">Urgent</span>{% endif %}
+    </div>
+    <p class="font-body-md text-body-md text-on-surface whitespace-pre-line">{{ req.description }}</p>
+    <p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-4 flex-wrap">
+      <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">event</span>{{ req.date|date:"d/m/Y" }} · {{ req.get_time_slot_display }}</span>
+      <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">location_on</span>{{ req.city }}</span>
+      {% if req.budget %}<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">payments</span>Budget : {{ req.budget }} DT</span>{% endif %}
+    </p>
+  </section>
+
+  {% if not has_services %}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-6 text-center space-y-3">
+    <span class="material-symbols-outlined text-[36px] text-on-surface-variant">handyman</span>
+    <p class="text-on-surface-variant">Vous n'avez aucun service publié dans la catégorie « {{ req.get_category_display }} ». Publiez-en un pour pouvoir répondre.</p>
+    <a href="{% url 'service_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-lg shadow-sm hover:opacity-95"><span class="material-symbols-outlined text-[18px]">add</span>Ajouter un service</a>
+  </div>
+  {% else %}
+  <form method="post" class="bg-surface-container-lowest rounded-xl shadow-sm p-6 space-y-4">
+    {% csrf_token %}
+    <h2 class="font-headline-sm text-headline-sm text-primary font-bold">Votre proposition</h2>
+    {% if form.non_field_errors %}<div class="p-3 rounded-xl bg-error-container text-on-error-container font-body-sm">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% for f in form %}
+      <div class="{% if f.name == 'service' or f.name == 'message' %}sm:col-span-2{% endif %}">
+        <label for="{{ f.id_for_label }}" class="block mb-1 font-label-lg text-label-lg text-on-surface">{{ f.label }}</label>
+        {{ f }}
+        {% for e in f.errors %}<p class="mt-1 text-error font-body-sm">{{ e }}</p>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="flex justify-end">
+      <button class="h-11 px-6 inline-flex items-center gap-2 rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition">
+        <span class="material-symbols-outlined text-[18px]">send</span>Envoyer ma proposition</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

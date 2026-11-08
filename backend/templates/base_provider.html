@@ -1,88 +1,43 @@
-<!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>{% block title %}Espace Prestataire · HomeConnect{% endblock %}</title>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
-<style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style>
-<script src="https://cdn.tailwindcss.com"></script>
-<script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-error-container":"#93000a","on-secondary":"#ffffff","on-secondary-fixed-variant":"#00522d","tertiary":"#003663","on-tertiary":"#ffffff","surface-container-high":"#dee8ff","on-secondary-fixed":"#00210f","background":"#f9f9ff","on-surface":"#111c2d","on-primary-fixed":"#001d35","outline":"#72777f","primary-fixed-dim":"#a0cafc","on-tertiary-fixed-variant":"#004881","secondary-container":"#97f3b5","surface-dim":"#cfdaf2","surface-tint":"#35618d","on-primary-fixed-variant":"#184974","surface-bright":"#f9f9ff","secondary-fixed":"#9af6b8","on-tertiary-fixed":"#001c38","error-container":"#ffdad6","on-primary":"#ffffff","surface":"#f9f9ff","on-tertiary-container":"#8fbfff","surface-variant":"#d8e3fb","on-background":"#111c2d","tertiary-fixed":"#d3e4ff","primary-container":"#1f4e79","tertiary-container":"#004d8a","surface-container":"#e7eeff","tertiary-fixed-dim":"#a2c9ff","on-secondary-container":"#047240","inverse-on-surface":"#ecf1ff","on-surface-variant":"#42474f","error":"#ba1a1a","on-primary-container":"#95bff1","inverse-primary":"#a0cafc","surface-container-highest":"#d8e3fb","outline-variant":"#c2c7d0","primary-fixed":"#d1e4ff","surface-container-lowest":"#ffffff","secondary":"#006d3d","secondary-fixed-dim":"#7ed99e","on-error":"#ffffff","primary":"#00375e","inverse-surface":"#263143","surface-container-low":"#f0f3ff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-lg":"1.5rem","margin":"2rem","margin-mobile":"1rem","space-sm":"0.5rem","space-xs":"0.25rem","gutter":"1.5rem","space-xl":"2rem","space-md":"1rem","gutter-mobile":"1rem"},"fontFamily":{"body-md":["Inter"],"headline-lg":["Inter"],"headline-xl":["Inter"],"label-md":["Inter"],"label-lg":["Inter"],"display-hero":["Inter"],"display-hero-mobile":["Inter"],"headline-xl-mobile":["Inter"],"body-lg":["Inter"],"body-sm":["Inter"],"headline-sm":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"]},"fontSize":{"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-xl":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-md":["12px",{"lineHeight":"16px","fontWeight":"500"}],"label-lg":["14px",{"lineHeight":"20px","fontWeight":"600"}],"display-hero":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"display-hero-mobile":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"700"}],"headline-xl-mobile":["26px",{"lineHeight":"34px","letterSpacing":"-0.01em","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-sm":["13px",{"lineHeight":"18px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"600"}]}}}}</script>
-</head>
-<body class="bg-surface font-body-md text-body-md text-on-surface">
+{% extends "base_dashboard.html" %}
+{% block title %}Espace Prestataire · HomeConnect{% endblock %}
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-  <div class="h-20 w-full px-margin flex items-center justify-between">
-    <div class="flex items-center gap-space-lg">
-      <a href="{% url 'home' %}" class="flex items-center gap-space-sm text-primary">
-        <span class="material-symbols-outlined text-[28px]">home_repair_service</span>
-        <span class="font-headline-sm text-headline-sm tracking-tight">HomeConnect</span>
-      </a>
-      <div class="hidden sm:flex items-center bg-surface-container px-space-sm py-space-xs rounded-full gap-space-xs">
-        <button class="px-space-sm py-space-xs rounded-full font-label-sm text-label-sm uppercase text-on-surface-variant hover:text-on-surface" type="button">Client</button>
-        <button class="px-space-sm py-space-xs rounded-full font-label-sm text-label-sm uppercase bg-surface-container-lowest text-secondary font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.04)]" type="button">Prestataire</button>
-      </div>
+{% block role_pills %}
+  <span class="px-space-sm py-space-xs rounded-full bg-surface-container-lowest text-secondary font-label-sm text-label-sm uppercase tracking-wider font-semibold">Prestataire</span>
+{% endblock %}
+
+{% block header_action %}
+  <a href="{% url 'service_create' %}"
+     class="hidden sm:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition-all">
+    <span class="material-symbols-outlined text-[18px]">add</span>Ajouter un service
+  </a>
+{% endblock %}
+
+{% block space_label %}Espace Prestataire{% endblock %}
+{% block support_label %}Support Pro 7j/7 actif{% endblock %}
+
+{% block sidebar_nav %}
+  <a href="{% url 'provider_dashboard' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'provider_dashboard' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Tableau de bord</a>
+  <a href="{% url 'service_list' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_list' or n == 'service_update' or n == 'service_delete' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Mes services</a>
+  <a href="{% url 'service_create' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_create' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Ajouter un service</a>
+  <a href="{% url 'provider_requests' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'provider_requests' or n == 'offer_create' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Demandes clients</a>
+  <a href="{% url 'provider_appointments' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'provider_appointments' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Mes interventions</a>
+  <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Messagerie</a>
+  <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Factures &amp; Revenus</a>
+  <a href="{% url 'profile' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'profile' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Profil professionnel</a>
+{% endblock %}
+
+{% block sidebar_card %}
+  <div class="bg-surface-container-low p-space-md rounded-xl">
+    <div class="flex items-center gap-space-xs text-secondary mb-space-xs">
+      <span class="material-symbols-outlined text-[20px]">verified</span>
+      <span class="font-label-lg text-label-lg font-bold">Statut Vérifié</span>
     </div>
-    <div class="flex items-center gap-space-md">
-      <a href="{% url 'service_create' %}" class="hidden sm:inline-flex items-center justify-center bg-secondary text-on-secondary px-space-md py-space-xs rounded-xl font-label-md text-label-md hover:opacity-95 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)]">Ajouter un service</a>
-      <div class="relative flex items-center justify-center p-space-xs rounded-xl hover:bg-surface-container text-on-surface-variant hover:text-on-surface cursor-pointer">
-        <span class="material-symbols-outlined">notifications</span>
-        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-surface-container-lowest"></span>
-      </div>
-      <a href="{% url 'profile' %}" class="flex items-center gap-space-sm pl-space-sm rounded-xl py-space-xs px-space-sm hover:bg-surface-container">
-        <div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-lg font-bold">{{ user.username|slice:":1"|upper }}</div>
-        <div class="hidden md:flex flex-col text-left">
-          <span class="font-label-md text-label-md text-on-surface font-semibold">{{ user.get_full_name|default:user.username }}</span>
-          <span class="font-label-sm text-label-sm text-secondary font-medium">{{ user.get_role_display }}</span>
-        </div>
-      </a>
-      <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-        <button type="submit" title="Déconnexion" class="p-space-xs rounded-xl hover:bg-surface-container text-on-surface-variant hover:text-on-surface">
-          <span class="material-symbols-outlined">logout</span>
-        </button>
-      </form>
-    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Vos documents professionnels et assurances sont conformes.</p>
   </div>
-  <div class="w-full bg-surface-container-low px-margin py-space-sm flex items-center justify-between shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-    <div class="flex items-center gap-space-sm text-on-surface-variant font-label-md text-label-md">
-      <a class="hover:text-on-surface flex items-center gap-space-xs" href="{% url 'home' %}"><span class="material-symbols-outlined text-[16px]">home</span>Accueil</a>
-      <span class="material-symbols-outlined text-[14px]">chevron_right</span>
-      <span class="text-primary font-semibold">Espace Prestataire</span>
-    </div>
-    <span class="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-space-sm py-space-xs rounded-full font-medium">Support Pro 7j/7 actif</span>
-  </div>
-</header>
-
-{% with n=request.resolver_match.url_name %}
-<aside class="hidden lg:flex fixed left-0 top-32 h-[calc(100vh-8rem)] w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex-col justify-between py-space-md">
-  <nav class="space-y-space-xs px-space-md">
-    <a href="{% url 'provider_dashboard' %}" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Tableau de bord</a>
-    <a href="{% url 'service_list' %}" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_list' or n == 'service_update' or n == 'service_delete' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Mes services</a>
-    <a href="{% url 'service_create' %}" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_create' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Ajouter un service</a>
-    <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Mes interventions</a>
-    <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Messagerie</a>
-    <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Factures &amp; Revenus</a>
-    <a href="{% url 'profile' %}" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Profil professionnel</a>
-  </nav>
-  <div class="px-space-md pt-space-md">
-    <div class="bg-surface-container-low p-space-md rounded-xl">
-      <div class="flex items-center gap-space-xs text-secondary mb-space-xs">
-        <span class="material-symbols-outlined text-[20px]">verified</span>
-        <span class="font-label-lg text-label-lg font-bold">Statut Vérifié</span>
-      </div>
-      <p class="font-body-sm text-body-sm text-on-surface-variant">Vos documents professionnels et assurances sont conformes.</p>
-    </div>
-  </div>
-</aside>
-{% endwith %}
-
-<div class="lg:pl-64">
-  <main class="relative pt-32 w-full px-margin bg-surface">
-    <div class="flex flex-col w-full pb-16">
-      {% include "_messages.html" %}
-      {% block content %}{% endblock %}
-    </div>
-  </main>
-</div>
-
-{% block scripts %}{% endblock %}
-</body></html>
+{% endblock %}

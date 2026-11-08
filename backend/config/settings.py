@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'accounts',
     'services',
     'appointments',
+    'offers',
 ]
 # AUTH_USER_MODEL = "accounts.User"
 
@@ -123,7 +124,7 @@ AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "post_login"
 LOGOUT_REDIRECT_URL = "login"
-
+MEDIA_URL = "/media/"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/

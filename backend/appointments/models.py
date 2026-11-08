@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 
+
 class Appointment(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "En attente"

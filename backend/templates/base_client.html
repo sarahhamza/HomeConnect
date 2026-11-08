@@ -5,6 +5,10 @@
 {% endblock %}
 
 {% block header_action %}
+  <a href="{% url 'request_create' %}"
+     class="hidden md:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl border border-outline-variant text-primary font-label-lg text-label-lg hover:bg-surface-container transition-all">
+    <span class="material-symbols-outlined text-[18px]">campaign</span>Publier un besoin
+  </a>
   <a href="{% url 'client_dashboard' %}#services"
      class="hidden sm:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition-all">
     <span class="material-symbols-outlined text-[18px]">search</span>Trouver un service
@@ -22,6 +26,10 @@
   <a href="{% url 'client_dashboard' %}#services"
      class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
     <span class="material-symbols-outlined text-[20px]">home_repair_service</span>Tous les services
+  </a>
+  <a href="{% url 'request_list' %}"
+     class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-colors {% if n == 'request_list' or n == 'request_create' or n == 'request_detail' %}bg-surface-container text-primary{% else %}text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface{% endif %}">
+    <span class="material-symbols-outlined text-[20px]">campaign</span>Mes demandes
   </a>
   <a href="{% url 'client_dashboard' %}#reservations"
      class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">

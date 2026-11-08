@@ -22,9 +22,11 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", TemplateView.as_view(template_name="home.html"), name="home"),
+    path("", TemplateView.as_view(template_name="accounts/login.html"), name="home"),
     path("accounts/", include("accounts.urls")),
     path("services/", include("services.urls")),
     path("espace-client/", include("appointments.urls")),
+    path("espace-prestataire/", include("appointments.provider_urls")),
+    path("offres/", include("offers.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

@@ -1,0 +1,47 @@
+{% extends "base_client.html" %}
+{% block title %}Mes demandes · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl w-full mx-auto space-y-space-lg">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-primary">Mes demandes</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">Les besoins que vous avez publiés et les propositions reçues.</p>
+    </div>
+    <a href="{% url 'request_create' %}" class="inline-flex items-center gap-space-xs h-11 px-space-lg rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95">
+      <span class="material-symbols-outlined text-[18px]">add</span>Publier un besoin
+    </a>
+  </div>
+
+  <div class="space-y-space-md">
+    {% for r in requests %}
+    <a href="{% url 'request_detail' r.pk %}" class="block bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-shadow p-space-lg">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+        <div class="min-w-0">
+          <div class="flex items-center gap-space-sm flex-wrap">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold truncate">{{ r.title }}</h3>
+            <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold">{{ r.get_category_display }}</span>
+            {% if r.urgent %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error text-on-error font-semibold">Urgent</span>{% endif %}
+          </div>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-3 flex-wrap">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">event</span>{{ r.date|date:"d/m/Y" }} · {{ r.get_time_slot_display }}</span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">location_on</span>{{ r.city }}</span>
+          </p>
+        </div>
+        <div class="flex items-center gap-space-sm shrink-0">
+          {% if r.status == 'open' %}
+            <span class="font-label-sm text-label-sm px-3 py-1.5 rounded-lg bg-[#FEF3C7] text-[#92400E] font-bold">{{ r.pending_offers }} proposition{{ r.pending_offers|pluralize }}</span>
+          {% endif %}
+          <span class="font-label-sm text-label-sm px-3 py-1.5 rounded-lg font-bold {% if r.status == 'open' %}bg-secondary-container text-on-secondary-container{% elif r.status == 'assigned' %}bg-[#D1FAE5] text-[#059669]{% else %}bg-surface-container text-on-surface-variant{% endif %}">{{ r.get_status_display }}</span>
+        </div>
+      </div>
+    </a>
+    {% empty %}
+    <div class="text-center py-space-xl bg-surface-container-lowest rounded-xl shadow-sm">
+      <span class="material-symbols-outlined text-[40px] text-on-surface-variant">campaign</span>
+      <p class="text-on-surface-variant mt-space-sm">Vous n'avez publié aucun besoin pour le moment.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

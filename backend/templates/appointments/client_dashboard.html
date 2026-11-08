@@ -1,42 +1,5 @@
-{% extends "base_dashboard.html" %}
+{% extends "base_client.html" %}
 {% block title %}Mon espace · HomeConnect{% endblock %}
-
-{% block role_pills %}
-  <span class="px-space-sm py-space-xs rounded-full bg-surface-container-lowest text-secondary font-label-sm text-label-sm">CLIENT</span>
-{% endblock %}
-
-{% block header_action %}
-  <a href="#services" class="hidden sm:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg hover:opacity-90">
-    <span class="material-symbols-outlined text-[18px]">search</span>Trouver un service
-  </a>
-{% endblock %}
-
-{% block space_label %}Espace Client{% endblock %}
-{% block support_label %}Support 7j/7{% endblock %}
-
-{% block sidebar_nav %}
-  <a href="{% url 'client_dashboard' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg {% if n == 'client_dashboard' %}bg-surface-container text-primary{% else %}text-on-surface-variant hover:bg-surface-container-low{% endif %}">
-    <span class="material-symbols-outlined text-[20px]">dashboard</span>Tableau de bord
-  </a>
-  <a href="#services" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low">
-    <span class="material-symbols-outlined text-[20px]">handyman</span>Tous les services
-  </a>
-  <a href="#reservations" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low">
-    <span class="material-symbols-outlined text-[20px]">event</span>Mes réservations
-  </a>
-  <a href="{% url 'profile' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low">
-    <span class="material-symbols-outlined text-[20px]">account_circle</span>Mon profil
-  </a>
-{% endblock %}
-
-{% block sidebar_card %}
-  <div class="p-space-md rounded-xl bg-surface-container-low">
-    <p class="font-label-lg text-label-lg text-secondary flex items-center gap-space-xs">
-      <span class="material-symbols-outlined text-[18px]">verified_user</span>Paiement sécurisé
-    </p>
-    <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Réservez en toute confiance auprès de prestataires vérifiés.</p>
-  </div>
-{% endblock %}
 
 {% block content %}
 <div class="flex flex-col w-full">
@@ -154,7 +117,10 @@
         <p class="font-body-sm text-body-sm text-on-surface-variant">1. Choisissez un service  •  2. Sélectionnez un créneau  •  3. Le prestataire confirme votre demande</p>
       </div>
     </div>
-    <a href="#services" class="px-space-md py-2 rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md font-semibold hover:bg-surface-container transition-colors shadow-sm shrink-0">Voir les services</a>
+    <div class="flex items-center gap-space-sm shrink-0">
+      <a href="{% url 'request_create' %}" class="px-space-md py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-sm">Publier un besoin</a>
+      <a href="#services" class="px-space-md py-2 rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md font-semibold hover:bg-surface-container transition-colors shadow-sm">Voir les services</a>
+    </div>
   </div>
 
   <!-- ===== LAYOUT 2 COLONNES ===== -->
@@ -299,7 +265,7 @@
           </div>
           <div>
             <p class="font-label-lg text-on-surface">{{ a.service.name }}</p>
-            <p class="font-body-sm text-on-surface-variant">{{ a.date|date:"d/m/Y" }} · {{ a.get_slot_display }} · {{ a.provider.username }}</p>
+            <p class="font-body-sm text-on-surface-variant">{{ a.date|date:"d/m/Y" }} · {{ a.get_time_slot_display }} · {{ a.provider.username }}</p>
           </div>
         </div>
         <div class="flex items-center gap-space-sm">
@@ -317,6 +283,5 @@
       {% endfor %}
     </div>
   </section>
-
 </div>
 {% endblock %}

@@ -1,16 +1,144 @@
-{% extends "base.html" %}
-{% load crispy_forms_tags %}
-{% block title %}Mon profil{% endblock %}
+{% extends base_template %}
+{% block title %}Mon profil · HomeConnect{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <h2 class="mb-1">Mon profil</h2>
-    <p class="text-muted">Rôle : <strong>{{ user.get_role_display }}</strong></p>
-    <form method="post">
-      {% csrf_token %}
-      {{ form|crispy }}
-      <button class="btn btn-primary mt-2">Enregistrer</button>
-    </form>
+<div class="max-w-5xl w-full mx-auto">
+
+  <div class="mb-space-lg">
+    <h1 class="font-headline-lg text-headline-lg text-primary">Mon profil</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Gérez vos informations personnelles, votre photo et la sécurité de votre compte.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg items-start">
+
+    <!-- Carte identité -->
+    <aside class="lg:col-span-1 rounded-2xl overflow-hidden bg-surface-container-lowest shadow-[0_2px_16px_rgba(0,55,94,0.08)]">
+      <div class="h-24 bg-gradient-to-br from-primary to-primary-container"></div>
+      <div class="px-space-lg pb-space-lg -mt-12 text-center">
+        <div class="relative w-24 h-24 mx-auto">
+          {% if user.avatar %}
+            <img id="avatar-preview" src="{{ user.avatar.url }}" alt="Photo de profil" onerror="this.style.display='none'" class="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-md">
+          {% else %}
+            <div id="avatar-fallback" class="w-24 h-24 rounded-full bg-secondary text-on-secondary ring-4 ring-white shadow-md flex items-center justify-center text-4xl font-bold">{{ user.username|slice:":1"|upper }}</div>
+            <img id="avatar-preview" src="" alt="" class="hidden w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-md absolute inset-0">
+          {% endif %}
+          <label for="id_avatar" title="Changer la photo" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center cursor-pointer shadow hover:bg-primary-container transition">
+            <span class="material-symbols-outlined text-[18px]">photo_camera</span>
+          </label>
+        </div>
+
+        <h2 class="mt-space-md font-headline-sm text-headline-sm text-on-surface">{{ user.get_full_name|default:user.username }}</h2>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">@{{ user.username }}</p>
+        <span class="inline-flex items-center gap-1 mt-space-sm px-space-md py-space-xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+          <span class="material-symbols-outlined text-[14px]">verified_user</span>{{ user.get_role_display }}
+        </span>
+
+        <dl class="mt-space-lg space-y-space-sm text-left font-body-sm text-body-sm">
+          <div class="flex items-center gap-space-sm text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-primary">mail</span><span class="truncate">{{ user.email|default:"—" }}</span></div>
+          <div class="flex items-center gap-space-sm text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-primary">call</span>{{ user.phone|default:"—" }}</div>
+          <div class="flex items-center gap-space-sm text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-primary">location_on</span>{{ user.city|default:"—" }}</div>
+          <div class="flex items-center gap-space-sm text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-primary">calendar_month</span>Membre depuis {{ user.date_joined|date:"F Y" }}</div>
+        </dl>
+
+        {% if user.avatar %}
+        <form method="post" class="mt-space-lg">
+          {% csrf_token %}
+          <button name="remove_avatar" class="text-label-md font-label-md text-error hover:underline">Supprimer la photo</button>
+        </form>
+        {% endif %}
+      </div>
+    </aside>
+
+    <div class="lg:col-span-2 space-y-space-lg">
+
+      <!-- Informations personnelles -->
+      <section class="rounded-2xl bg-surface-container-lowest p-space-lg shadow-[0_2px_16px_rgba(0,55,94,0.08)]">
+        <div class="flex items-center gap-space-sm mb-space-lg">
+          <span class="material-symbols-outlined text-primary">badge</span>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface">Informations personnelles</h2>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-space-md">
+          {% csrf_token %}
+          {{ form.avatar }}
+          {% if form.non_field_errors %}<div class="p-space-md rounded-xl bg-error-container text-on-error-container font-body-sm">{{ form.non_field_errors }}</div>{% endif %}
+          {% for e in form.avatar.errors %}<p class="text-error font-body-sm">{{ e }}</p>{% endfor %}
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+            {% for f in form.visible_fields %}{% if f.name != 'avatar' %}
+              <div class="{% if f.name == 'email' %}sm:col-span-2{% endif %}">
+                <label for="{{ f.id_for_label }}" class="block mb-1 font-label-lg text-label-lg text-on-surface">{{ f.label }}</label>
+                {{ f }}
+                {% for e in f.errors %}<p class="mt-1 text-error font-body-sm">{{ e }}</p>{% endfor %}
+              </div>
+            {% endif %}{% endfor %}
+          </div>
+
+          <div class="flex justify-end pt-space-sm">
+            <button name="save_profile" class="inline-flex items-center gap-space-sm h-11 px-space-lg rounded-xl bg-primary text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary-container transition">
+              <span class="material-symbols-outlined text-[18px]">save</span>Enregistrer
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Sécurité -->
+      <section class="rounded-2xl bg-surface-container-lowest p-space-lg shadow-[0_2px_16px_rgba(0,55,94,0.08)]">
+        <div class="flex items-center gap-space-sm mb-space-lg">
+          <span class="material-symbols-outlined text-primary">lock</span>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface">Changer le mot de passe</h2>
+        </div>
+
+        <form method="post" class="space-y-space-md">
+          {% csrf_token %}
+          {% for f in password_form %}
+            <div>
+              <label for="{{ f.id_for_label }}" class="block mb-1 font-label-lg text-label-lg text-on-surface">{{ f.label }}</label>
+              <div class="relative">
+                {{ f }}
+                <button type="button" onclick="togglePwd(this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface">
+                  <span class="material-symbols-outlined text-[20px]">visibility</span>
+                </button>
+              </div>
+              {% for e in f.errors %}<p class="mt-1 text-error font-body-sm">{{ e }}</p>{% endfor %}
+              {% if f.name == 'new_password1' and f.help_text %}
+                <div class="mt-1 font-body-sm text-body-sm text-on-surface-variant [&_ul]:list-disc [&_ul]:pl-5">{{ f.help_text|safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+
+          <div class="flex justify-end pt-space-sm">
+            <button name="change_password" class="inline-flex items-center gap-space-sm h-11 px-space-lg rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition">
+              <span class="material-symbols-outlined text-[18px]">key</span>Mettre à jour le mot de passe
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function togglePwd(btn) {
+    const input = btn.parentElement.querySelector("input");
+    const icon = btn.querySelector("span");
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    icon.textContent = show ? "visibility_off" : "visibility";
+  }
+
+  // Aperçu immédiat de la photo choisie
+  const fileInput = document.getElementById("id_avatar");
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const preview = document.getElementById("avatar-preview");
+    preview.src = URL.createObjectURL(file);
+    preview.classList.remove("hidden");
+    const fb = document.getElementById("avatar-fallback");
+    if (fb) fb.classList.add("hidden");
+  });
+</script>
 {% endblock %}

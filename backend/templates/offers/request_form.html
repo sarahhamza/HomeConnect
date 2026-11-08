@@ -1,0 +1,44 @@
+{% extends "base_client.html" %}
+{% block title %}Publier un besoin · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl w-full mx-auto">
+  <div class="mb-space-lg">
+    <h1 class="font-headline-lg text-headline-lg text-primary">Publier un besoin</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Décrivez ce dont vous avez besoin : les prestataires concernés vous enverront leur prix et leur créneau.</p>
+  </div>
+
+  <form method="post" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg space-y-space-md">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="p-space-md rounded-xl bg-error-container text-on-error-container font-body-sm">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+      {% for f in form %}
+        {% if f.name == 'urgent' %}
+          <label class="sm:col-span-2 flex items-center gap-space-sm font-label-lg text-label-lg text-on-surface cursor-pointer">
+            {{ f }} Besoin urgent (intervention au plus vite)
+          </label>
+        {% else %}
+          <div class="{% if f.name in 'title description address' %}sm:col-span-2{% endif %}">
+            <label for="{{ f.id_for_label }}" class="block mb-1 font-label-lg text-label-lg text-on-surface">{{ f.label }}</label>
+            {{ f }}
+            {% for e in f.errors %}<p class="mt-1 text-error font-body-sm">{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <p class="font-body-sm text-body-sm text-on-surface-variant flex items-start gap-1">
+      <span class="material-symbols-outlined text-[16px] text-secondary">lock</span>
+      Votre adresse exacte n'est partagée qu'avec le prestataire dont vous acceptez la proposition.
+    </p>
+
+    <div class="flex justify-end gap-space-sm pt-space-sm">
+      <a href="{% url 'request_list' %}" class="h-11 px-space-lg inline-flex items-center rounded-xl border border-outline-variant font-label-lg text-label-lg hover:bg-surface-container">Annuler</a>
+      <button class="h-11 px-space-lg inline-flex items-center gap-space-sm rounded-xl bg-primary text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary-container transition">
+        <span class="material-symbols-outlined text-[18px]">send</span>Publier mon besoin
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

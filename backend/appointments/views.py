@@ -67,7 +67,7 @@ class AppointmentCreateView(ClientRequiredMixin, CreateView):
 
     @cached_property
     def service(self):
-        return get_object_or_404(Service, pk=self.kwargs["service_id"], is_active=True)
+        return get_object_or_404(Service, id=self.kwargs["service_id"], is_active=True)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -91,8 +91,8 @@ class AppointmentCreateView(ClientRequiredMixin, CreateView):
 
 
 class AppointmentCancelView(ClientRequiredMixin, View):
-    def post(self, request, pk):
-        appt = get_object_or_404(Appointment, pk=pk, client=request.user)
+    def post(self, request, id):
+        appt = get_object_or_404(Appointment, id=id, client=request.user)
         if appt.can_cancel:
             appt.status = Appointment.Status.CANCELLED
             appt.save(update_fields=["status"])
