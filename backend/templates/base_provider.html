@@ -20,6 +20,8 @@
      class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'provider_dashboard' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Tableau de bord</a>
   <a href="{% url 'service_list' %}"
      class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_list' or n == 'service_update' or n == 'service_delete' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Mes services</a>
+  <a href="{% url 'availability_list' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'availability_list' or n == 'availability_create' or n == 'availability_update' or n == 'availability_delete' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Mes disponibilités</a>
   <a href="{% url 'service_create' %}"
      class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_create' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Ajouter un service</a>
   <a href="{% url 'provider_requests' %}"

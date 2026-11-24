@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q
@@ -12,7 +14,8 @@ from services.models import Service
 
 from .forms import AppointmentForm
 from .models import Appointment
-
+from .availability import free_slots
+from django.http import JsonResponse
 
 class ClientRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Utilisateur connecté ET de rôle client."""
@@ -100,3 +103,18 @@ class AppointmentCancelView(ClientRequiredMixin, View):
         else:
             messages.error(request, "Cette réservation ne peut plus être annulée.")
         return redirect("client_dashboard")
+    
+class FreeSlotsView(ClientRequiredMixin, View):
+    """GET ?date=YYYY-MM-DD -> créneaux de la journée avec leur état libre / occupé."""
+
+    def get(self, request, service_id):
+        service = get_object_or_404(Service, id=service_id, is_active=True)
+        try:
+            date = datetime.date.fromisoformat(request.GET.get("date", ""))
+        except ValueError:
+            return JsonResponse({"slots": []})
+        free = set() if date < timezone.localdate() else set(free_slots(service.provider, date))
+        return JsonResponse({"slots": [
+            {"value": v, "label": label, "free": v in free}
+            for v, label in Appointment.Slot.choices
+        ]})

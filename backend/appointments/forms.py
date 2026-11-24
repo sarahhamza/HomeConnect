@@ -1,9 +1,10 @@
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 
 from django import forms
 from django.utils import timezone
 
 from .models import Appointment
+from .availability import is_slot_available
 
 FIELD = ("w-full px-4 py-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md "
          "focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary")
@@ -27,15 +28,18 @@ class AppointmentForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
-        day, slot = cleaned.get("date"), cleaned.get("time_slot")
-        if day and slot:
-            start = timezone.make_aware(datetime.combine(day, time(int(slot.split("-")[0]))))
-            earliest = timezone.now() + timedelta(hours=self.service.lead_time_hours)
-            if start < earliest:
-                raise forms.ValidationError(
-                    f"Ce créneau est trop proche : ce prestataire demande un délai minimum de "
-                    f"{self.service.lead_time_hours} h."
-                )
-        if cleaned.get("urgent") and not self.service.has_urgency:
-            cleaned["urgent"] = False
+        date, slot = cleaned.get("date"), cleaned.get("time_slot")
+        if not (date and slot):
+            return cleaned
+
+        lead = self.service.lead_time_hours
+        earliest = (timezone.localtime() + timedelta(hours=lead)).date()
+        if date < earliest:
+            raise forms.ValidationError(
+                f"Ce prestataire demande un délai minimum de {lead} h avant l'intervention."
+            )
+        if not is_slot_available(self.service.provider, date, slot):
+            raise forms.ValidationError(
+                "Ce créneau n'est pas disponible pour ce prestataire. Choisissez-en un autre."
+            )
         return cleaned

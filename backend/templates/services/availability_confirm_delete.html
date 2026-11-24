@@ -1,0 +1,19 @@
+{% extends "base_provider.html" %}
+{% block title %}Supprimer un créneau · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-xl w-full">
+  <form method="post" class="bg-surface-container-lowest rounded-xl shadow-sm p-6 space-y-5">
+    {% csrf_token %}
+    <h1 class="font-headline-md text-headline-md text-primary">Supprimer ce créneau ?</h1>
+    <p class="font-body-lg text-on-surface-variant">
+      {{ object.get_weekday_display }}, {{ object.start_time|time:"H:i" }} – {{ object.end_time|time:"H:i" }}.
+      Les clients ne pourront plus réserver sur ce créneau.
+    </p>
+    <div class="flex items-center justify-end gap-3">
+      <a href="{% url 'availability_list' %}" class="px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container font-label-lg">Annuler</a>
+      <button type="submit" class="px-5 py-2.5 rounded-lg bg-error text-on-error font-label-lg shadow-sm hover:opacity-95">Supprimer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

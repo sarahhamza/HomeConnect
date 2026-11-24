@@ -1,0 +1,45 @@
+{% extends "base_provider.html" %}
+{% block title %}{% if object %}Modifier{% else %}Ajouter{% endif %} un créneau · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-xl w-full space-y-6">
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-primary">{% if object %}Modifier le créneau{% else %}Ajouter un créneau{% endif %}</h1>
+    <p class="font-body-md text-on-surface-variant">Plusieurs créneaux par jour sont possibles (ex. 08:00–12:00 puis 14:00–18:00).</p>
+  </div>
+
+  <form method="post" class="bg-surface-container-lowest rounded-xl shadow-sm p-6 space-y-5">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="p-3 rounded-lg bg-error-container text-on-error-container font-body-sm">
+      {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="space-y-1.5">
+      <label for="{{ form.weekday.id_for_label }}" class="font-label-lg text-on-surface">Jour</label>
+      {{ form.weekday }}
+      {% for e in form.weekday.errors %}<p class="text-error font-body-sm">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="space-y-1.5">
+        <label for="{{ form.start_time.id_for_label }}" class="font-label-lg text-on-surface">Début</label>
+        {{ form.start_time }}
+        {% for e in form.start_time.errors %}<p class="text-error font-body-sm">{{ e }}</p>{% endfor %}
+      </div>
+      <div class="space-y-1.5">
+        <label for="{{ form.end_time.id_for_label }}" class="font-label-lg text-on-surface">Fin</label>
+        {{ form.end_time }}
+        {% for e in form.end_time.errors %}<p class="text-error font-body-sm">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2">
+      <a href="{% url 'availability_list' %}" class="px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container font-label-lg">Annuler</a>
+      <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg shadow-sm transition-colors">Enregistrer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

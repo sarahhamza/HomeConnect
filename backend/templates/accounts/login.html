@@ -40,7 +40,7 @@
         </button>
       </div>
 
-      <form class="flex flex-col gap-space-md" method="post">
+      <form class="flex flex-col gap-space-md" method="post" action="{% url 'login' %}">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
 

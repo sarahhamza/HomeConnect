@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.conf import settings
+from django.core.exceptions import ValidationError
 
 TRAVEL_FEE_CHOICES = [
     (0, "Inclus dans la zone d'intervention (0 €)"),
@@ -86,3 +88,42 @@ class Service(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_category_display()})"
+class Availability(models.Model):
+    class Weekday(models.IntegerChoices):
+        MONDAY = 0, "Lundi"
+        TUESDAY = 1, "Mardi"
+        WEDNESDAY = 2, "Mercredi"
+        THURSDAY = 3, "Jeudi"
+        FRIDAY = 4, "Vendredi"
+        SATURDAY = 5, "Samedi"
+        SUNDAY = 6, "Dimanche"
+ 
+    provider = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="availabilities",
+    )
+    weekday = models.PositiveSmallIntegerField("Jour", choices=Weekday.choices)
+    start_time = models.TimeField("Début")
+    end_time = models.TimeField("Fin")
+ 
+    class Meta:
+        ordering = ["weekday", "start_time"]
+        verbose_name = "Disponibilité"
+ 
+    def __str__(self):
+        return f"{self.get_weekday_display()} {self.start_time:%H:%M}-{self.end_time:%H:%M}"
+ 
+    def clean(self):
+        if not (self.start_time and self.end_time and self.provider_id):
+            return
+        if self.end_time <= self.start_time:
+            raise ValidationError("L'heure de fin doit être après l'heure de début.")
+        overlap = Availability.objects.filter(
+            provider_id=self.provider_id,
+            weekday=self.weekday,
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time,
+        ).exclude(pk=self.pk)
+        if overlap.exists():
+            raise ValidationError("Ce créneau chevauche une disponibilité existante ce jour-là.")

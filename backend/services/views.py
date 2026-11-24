@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
@@ -8,7 +10,8 @@ from appointments.provider_views import provider_dashboard_context
 
 from .forms import ServiceForm
 from .models import Service
-
+from .forms import AvailabilityForm
+from .models import Availability
 
 class ProviderRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Utilisateur connecté ET de rôle prestataire."""
@@ -79,4 +82,59 @@ class ServiceDeleteView(OwnServiceMixin, DeleteView):
 
     def form_valid(self, form):
         messages.success(self.request, "Service supprimé.")
+        return super().form_valid(form)
+    
+class AvailabilityOwnedMixin(ProviderRequiredMixin):
+    model = Availability
+    success_url = reverse_lazy("availability_list")
+ 
+    def get_queryset(self):
+        return Availability.objects.filter(provider=self.request.user)
+ 
+ 
+class AvailabilityListView(AvailabilityOwnedMixin, ListView):
+    template_name = "services/availability_list.html"
+    context_object_name = "availabilities"
+ 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        slots = defaultdict(list)
+        for a in ctx["availabilities"]:
+            slots[a.weekday].append(a)
+        ctx["week"] = [
+            {"label": label, "slots": slots[value]}
+            for value, label in Availability.Weekday.choices
+        ]
+        ctx["total"] = len(ctx["availabilities"])
+        return ctx
+ 
+ 
+class AvailabilityFormMixin(AvailabilityOwnedMixin):
+    form_class = AvailabilityForm
+    template_name = "services/availability_form.html"
+    success_message = ""
+ 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["provider"] = self.request.user
+        return kwargs
+ 
+    def form_valid(self, form):
+        messages.success(self.request, self.success_message)
+        return super().form_valid(form)
+ 
+ 
+class AvailabilityCreateView(AvailabilityFormMixin, CreateView):
+    success_message = "Disponibilité ajoutée."
+
+
+class AvailabilityUpdateView(AvailabilityFormMixin, UpdateView):
+    success_message = "Disponibilité modifiée."
+
+ 
+class AvailabilityDeleteView(AvailabilityOwnedMixin, DeleteView):
+    template_name = "services/availability_confirm_delete.html"
+ 
+    def form_valid(self, form):
+        messages.success(self.request, "Disponibilité supprimée.")
         return super().form_valid(form)
