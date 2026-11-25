@@ -38,6 +38,7 @@
               <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold truncate">{{ a.client.get_full_name|default:a.client.username }}</h3>
               <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold">{{ a.service.get_category_display }}</span>
               {% if a.urgent %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error text-on-error font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">emergency</span>Urgent</span>{% endif %}
+              {% include "appointments/_match_badge.html" with appointment=a %}
             </div>
             <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">{{ a.service.name }}</p>
           </div>
@@ -78,12 +79,19 @@
       </p>
       {% endif %}
 
+      {% if a.is_auto and a.status == 'pending' %}
+      <div class="flex items-start gap-3 p-3 rounded-lg bg-[#FEF3C7] text-[#92400E] font-body-sm text-body-sm">
+        <span class="material-symbols-outlined text-[20px]">timer</span>
+        <span><b>Attribuée automatiquement par le matching.</b> Répondez avant <b>{{ a.respond_by|date:"H:i" }}</b> ({{ a.respond_by|date:"d/m" }}) : sans réponse, elle passe au prestataire suivant.{% if a.shifted %} Plage décalée : le client avait demandé le {{ a.requested_date|date:"d/m/Y" }} · {{ a.requested_slot_label }}.{% endif %}</span>
+      </div>
+      {% endif %}
+
       {% if a.status == 'pending' or a.status == 'confirmed' %}
-      <form method="post" action="{% url 'provider_appointment_action' a.pk %}" class="flex flex-wrap justify-end gap-2">
+      <form method="post" action="{% if a.is_auto and a.status == 'pending' %}{% url 'provider_match_action' a.pk %}{% else %}{% url 'provider_appointment_action' a.pk %}{% endif %}" class="flex flex-wrap justify-end gap-2">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
         {% if a.status == 'pending' %}
-          <button name="action" value="refuse" onclick="return confirm('Refuser cette demande ?')"
+          <button name="action" value="refuse" onclick="return confirm('{% if a.is_auto %}Refuser cette demande ? Elle sera proposée au prestataire suivant.{% else %}Refuser cette demande ?{% endif %}')"
                   class="h-10 px-4 rounded-lg border border-outline-variant text-on-surface font-label-lg text-label-lg hover:bg-error-container transition">Refuser</button>
           <button name="action" value="confirm"
                   class="h-10 px-4 rounded-lg bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition flex items-center gap-1">

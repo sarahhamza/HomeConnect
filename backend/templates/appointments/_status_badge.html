@@ -1,5 +1,7 @@
-<span class="inline-flex items-center px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold
   {% if appointment.status == 'confirmed' %}bg-[#D1FAE5] text-[#059669]
   {% elif appointment.status == 'pending' %}bg-[#FEF3C7] text-[#D97706]
   {% elif appointment.status == 'completed' %}bg-[#DBEAFE] text-[#2563EB]
-  {% else %}bg-[#FEE2E2] text-[#DC2626]{% endif %}">{{ appointment.get_status_display }}</span>
+  {% elif appointment.status == 'searching' %}bg-[#E0E7FF] text-[#4338CA]
+  {% elif appointment.status == 'unmatched' %}bg-[#F3F4F6] text-[#4B5563]
+  {% else %}bg-[#FEE2E2] text-[#DC2626]{% endif %}">{% if appointment.status == 'searching' %}<span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>{% endif %}{{ appointment.get_status_display }}</span>

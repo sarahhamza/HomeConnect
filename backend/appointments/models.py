@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -47,6 +49,8 @@ class Appointment(models.Model):
     assigned_at = models.DateTimeField(null=True, blank=True)
     # Prestataires déjà essayés (refus ou pas de réponse)
     excluded_provider_ids = models.JSONField(default=list, blank=True)
+    # Détail de l'attribution IA (score, critères, tentative) : affiché dans les pages
+    match_info = models.JSONField(default=dict, blank=True)
     # Optionnels : sans eux, la proximité est neutre dans le score
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
@@ -68,6 +72,39 @@ class Appointment(models.Model):
     def can_cancel(self):
         return self.status in (self.Status.PENDING, self.Status.CONFIRMED,
                                self.Status.SEARCHING)
+
+    # --- Matching automatique : aides pour les templates ---
+    @property
+    def is_auto(self):
+        """Demande passée par le matching (et non réservée directement)."""
+        return self.requested_date is not None
+
+    @property
+    def shifted(self):
+        """Le créneau attribué diffère de celui demandé par le client."""
+        return bool(self.is_auto and self.provider_id and (
+            self.date != self.requested_date or self.time_slot != self.requested_slot))
+
+    # Délai laissé au prestataire pour répondre avant réattribution (cf. reassign_pending)
+    # (même réglage que la commande : settings.REASSIGN_AFTER_HOURS, 2 h par défaut)
+    RESPONSE_DELAY_HOURS = getattr(settings, "REASSIGN_AFTER_HOURS", 2)
+
+    @property
+    def respond_by(self):
+        """Heure limite de réponse du prestataire (None si non attribué par l'IA)."""
+        if self.assigned_at is None:
+            return None
+        return self.assigned_at + timedelta(hours=self.RESPONSE_DELAY_HOURS)
+
+    @property
+    def match_percent(self):
+        """Score d'attribution en % (0-100), None si absent."""
+        score = (self.match_info or {}).get("score")
+        return None if score is None else round(float(score) * 100)
+
+    @property
+    def requested_slot_label(self):
+        return dict(self.Slot.choices).get(self.requested_slot, self.requested_slot)
 
 
 class Review(models.Model):

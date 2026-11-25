@@ -1,0 +1,249 @@
+{% extends "base_client.html" %}
+{% block title %}Suivi de votre demande · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="mb-space-lg flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+  <div>
+    <div class="flex items-center gap-space-xs text-secondary font-label-sm text-label-sm uppercase tracking-wider mb-space-xs">
+      <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+      <span>Matching automatique · {{ appt.service.get_category_display }}</span>
+    </div>
+    <h1 class="font-headline-xl text-headline-xl text-on-surface">Suivi de votre demande</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-space-xs">
+      {{ appt.date|date:"l d F Y" }} · {{ appt.get_time_slot_display }}{% if appt.urgent %} · <span class="text-error font-semibold">Urgent</span>{% endif %}
+    </p>
+  </div>
+  <div class="flex items-center gap-space-sm self-start md:self-auto">
+    {% include "appointments/_status_badge.html" with appointment=appt %}
+    <a href="{% url 'client_dashboard' %}#reservations"
+       class="inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl border border-outline-variant text-primary font-label-lg text-label-lg hover:bg-surface-container transition-all">
+      <span class="material-symbols-outlined text-[18px]">event</span>Mes réservations
+    </a>
+  </div>
+</div>
+
+<!-- ===== ÉTAPES ===== -->
+<ol class="mb-space-lg bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col md:flex-row gap-space-md">
+  {% for label, detail, state in steps %}
+  <li class="flex-1 flex md:flex-col items-start gap-space-sm relative">
+    <div class="flex md:w-full items-center">
+      <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center font-label-lg text-label-lg font-bold
+        {% if state == 'done' %}bg-secondary text-on-secondary
+        {% elif state == 'active' %}bg-primary text-on-primary
+        {% elif state == 'error' %}bg-error text-on-error
+        {% else %}bg-surface-container text-on-surface-variant{% endif %}">
+        {% if state == 'done' %}<span class="material-symbols-outlined text-[20px]">check</span>
+        {% elif state == 'active' %}<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+        {% elif state == 'error' %}<span class="material-symbols-outlined text-[20px]">close</span>
+        {% else %}{{ forloop.counter }}{% endif %}
+      </div>
+      {% if not forloop.last %}
+      <div class="hidden md:block flex-1 h-0.5 mx-space-sm rounded-full {% if state == 'done' %}bg-secondary{% else %}bg-surface-container-high{% endif %}"></div>
+      {% endif %}
+    </div>
+    <div class="min-w-0 md:pr-space-md">
+      <p class="font-label-lg text-label-lg font-semibold {% if state == 'todo' %}text-on-surface-variant{% else %}text-on-surface{% endif %}">{{ label }}</p>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">{{ detail }}</p>
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+
+  <!-- ===== COLONNE GAUCHE : état de la demande ===== -->
+  <div class="lg:col-span-7 flex flex-col gap-space-lg">
+
+    {% if appt.provider_id %}
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+      <div class="p-space-lg flex flex-col gap-space-md">
+        <div class="flex items-center justify-between gap-space-sm flex-wrap">
+          <div class="flex items-center gap-space-md min-w-0">
+            <div class="w-14 h-14 rounded-full bg-primary-container text-on-primary font-headline-sm text-headline-sm font-bold flex items-center justify-center uppercase shrink-0">
+              {{ appt.provider.username|slice:":2" }}
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1">
+                <h2 class="font-headline-md text-headline-md text-on-surface font-bold truncate">{{ appt.provider.get_full_name|default:appt.provider.username }}</h2>
+                <span class="material-symbols-outlined text-secondary text-[20px]" title="Prestataire vérifié">verified</span>
+              </div>
+              <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ appt.service.name }} · {{ appt.service.base_city }}</p>
+            </div>
+          </div>
+          <div class="flex flex-col items-end">
+            {% if rating.n %}
+            <span class="inline-flex items-center gap-1 font-headline-sm text-headline-sm font-bold text-on-surface">
+              <span class="material-symbols-outlined text-[20px] text-amber-500" style="font-variation-settings:'FILL' 1">star</span>{{ rating.avg|floatformat:1 }}
+            </span>
+            <span class="font-label-md text-label-md text-on-surface-variant">{{ rating.n }} avis</span>
+            {% else %}
+            <span class="font-label-md text-label-md px-space-sm py-space-xs rounded-full bg-surface-container text-primary font-semibold">Nouveau prestataire</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm bg-surface-container-low p-space-md rounded-lg">
+          <div>
+            <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Date</p>
+            <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ appt.date|date:"d/m/Y" }}</p>
+          </div>
+          <div>
+            <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Plage d'arrivée</p>
+            <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ appt.get_time_slot_display }}</p>
+          </div>
+          <div class="sm:text-right">
+            <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Total estimé TTC</p>
+            <p class="font-headline-md text-headline-md text-secondary font-bold mt-0.5">{{ appt.total_price }} <span class="font-body-lg">DT</span></p>
+          </div>
+        </div>
+
+        {% if appt.shifted %}
+        <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-[#FEF3C7] text-[#92400E] font-body-sm text-body-sm">
+          <span class="material-symbols-outlined text-[20px]">schedule</span>
+          <span><b>Créneau proche du vôtre.</b> Vous aviez demandé le {{ appt.requested_date|date:"d/m/Y" }} · {{ requested_label }}. Aucun prestataire n'était libre à cette plage : voici la plus proche. Vous pouvez annuler si elle ne vous convient pas.</span>
+        </div>
+        {% endif %}
+
+        {% if appt.status == 'pending' %}
+        <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-surface-container text-on-surface font-body-sm text-body-sm">
+          <span class="material-symbols-outlined text-[20px] text-primary">hourglass_top</span>
+          <span>En attente de confirmation. {{ appt.provider.get_full_name|default:appt.provider.username }} a jusqu'à <b>{{ appt.respond_by|date:"H:i" }}</b> ({{ appt.respond_by|date:"d/m" }}) pour répondre. Sans réponse, votre demande passe automatiquement au prestataire suivant.</span>
+        </div>
+        {% elif appt.status == 'confirmed' %}
+        <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-secondary-container text-on-secondary-container font-body-sm text-body-sm">
+          <span class="material-symbols-outlined text-[20px]">task_alt</span>
+          <span><b>Intervention confirmée.</b> {{ appt.provider.get_full_name|default:appt.provider.username }} se présentera le {{ appt.date|date:"d/m/Y" }} sur la plage {{ appt.get_time_slot_display }}.</span>
+        </div>
+        {% elif appt.status == 'completed' %}
+        <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-[#DBEAFE] text-[#1D4ED8] font-body-sm text-body-sm">
+          <span class="material-symbols-outlined text-[20px]">verified</span><span><b>Intervention terminée.</b> Merci d'avoir utilisé HomeConnect.</span>
+        </div>
+        {% elif appt.status == 'cancelled' %}
+        <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-error-container text-on-error-container font-body-sm text-body-sm">
+          <span class="material-symbols-outlined text-[20px]">cancel</span><span><b>Demande annulée.</b></span>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    {% elif appt.status == 'searching' %}
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center flex flex-col items-center gap-space-sm">
+      <span class="material-symbols-outlined text-[48px] text-primary animate-spin">progress_activity</span>
+      <h2 class="font-headline-md text-headline-md text-on-surface">Recherche en cours…</h2>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-md">Le moteur compare les prestataires disponibles. Cette page se met à jour toute seule ; si le moteur est momentanément indisponible, nous réessayons automatiquement toutes les 10 minutes.</p>
+    </section>
+
+    {% elif appt.status == 'unmatched' %}
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl flex flex-col items-center text-center gap-space-md">
+      <div class="w-14 h-14 rounded-full bg-error-container text-on-error-container flex items-center justify-center"><span class="material-symbols-outlined text-[30px]">person_off</span></div>
+      <div>
+        <h2 class="font-headline-md text-headline-md text-on-surface">Aucun prestataire disponible</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-space-xs max-w-md">Personne n'est libre sur cette période pour « {{ appt.service.get_category_display }} »{% if appt.excluded_provider_ids %}, et {{ appt.excluded_provider_ids|length }} prestataire{{ appt.excluded_provider_ids|length|pluralize }} sollicité{{ appt.excluded_provider_ids|length|pluralize }} n'{{ appt.excluded_provider_ids|length|pluralize:"a,ont" }} pas pu intervenir{% endif %}.</p>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-space-sm">
+        <a href="{% url 'auto_request' %}" class="inline-flex items-center gap-space-xs h-11 px-space-md rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">event_repeat</span>Essayer une autre date
+        </a>
+        <a href="{% url 'request_create' %}" class="inline-flex items-center gap-space-xs h-11 px-space-md rounded-xl border border-outline-variant text-primary font-label-lg text-label-lg hover:bg-surface-container transition-all">
+          <span class="material-symbols-outlined text-[18px]">campaign</span>Publier un besoin
+        </a>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Récapitulatif de la demande -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface">Votre demande</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+        <div>
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Adresse</p>
+          <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5 flex items-start gap-1"><span class="material-symbols-outlined text-[16px] text-primary mt-0.5">location_on</span>{{ appt.address }}</p>
+          {% if appt.address_details or appt.access_code %}
+          <p class="font-body-sm text-body-sm text-on-surface-variant">{{ appt.address_details }}{% if appt.address_details and appt.access_code %} · {% endif %}{% if appt.access_code %}Code : {{ appt.access_code }}{% endif %}</p>
+          {% endif %}
+        </div>
+        <div>
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Demande initiale</p>
+          <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ appt.requested_date|date:"d/m/Y" }} · {{ requested_label }}</p>
+        </div>
+      </div>
+      {% if appt.description %}
+      <p class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low rounded-lg p-space-sm"><span class="font-semibold text-on-surface">Problème décrit :</span> {{ appt.description }}</p>
+      {% endif %}
+      {% if appt.can_cancel %}
+      <form method="post" action="{% url 'appointment_cancel' appt.pk %}" class="flex justify-end">
+        {% csrf_token %}
+        <button class="h-10 px-space-md rounded-xl border border-outline-variant text-on-surface font-label-lg text-label-lg hover:bg-error-container transition" onclick="return confirm('Annuler cette demande ?')">Annuler la demande</button>
+      </form>
+      {% endif %}
+    </section>
+  </div>
+
+  <!-- ===== COLONNE DROITE : pourquoi ce prestataire ===== -->
+  <div class="lg:col-span-5 flex flex-col gap-space-lg lg:sticky lg:top-36">
+    <section class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-primary text-[22px]">auto_awesome</span>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface">{% if info.breakdown %}Pourquoi ce prestataire ?{% else %}Comment il sera choisi{% endif %}</h3>
+        </div>
+        <span class="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-space-sm py-space-xs rounded-full font-semibold">IA</span>
+      </div>
+
+      {% if info.breakdown %}
+      <div class="flex items-center gap-space-md bg-surface-container-low rounded-xl p-space-md">
+        <div class="w-20 h-20 rounded-full shrink-0 flex items-center justify-center" style="background: conic-gradient(#006d3d {{ appt.match_percent }}%, #d8e3fb 0); border-radius: 9999px">
+          <div class="w-[68px] h-[68px] rounded-full bg-surface-container-low flex flex-col items-center justify-center" style="border-radius: 9999px">
+            <span class="font-headline-sm text-headline-sm font-bold text-secondary leading-none">{{ appt.match_percent }}</span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant">/ 100</span>
+          </div>
+        </div>
+        <div>
+          <p class="font-label-lg text-label-lg font-bold text-on-surface">Score de compatibilité</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">Le meilleur parmi {{ info.compared }} prestataire{{ info.compared|pluralize }} comparé{{ info.compared|pluralize }}.</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="space-y-space-md">
+        {% for c in criteria %}
+        <div>
+          <div class="flex items-center justify-between font-label-md text-label-md text-on-surface">
+            <span class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-primary">{{ c.icon }}</span>{{ c.label }}</span>
+            <span class="flex items-center gap-space-xs">
+              <span class="text-on-surface-variant font-normal">poids {{ c.weight }} %</span>
+              {% if info.breakdown %}<span class="font-bold text-secondary">+{{ c.points }} pts</span>{% endif %}
+            </span>
+          </div>
+          <div class="h-2 mt-1 rounded-full bg-surface-container overflow-hidden">
+            <div class="h-full rounded-full {% if info.breakdown %}bg-secondary{% else %}bg-primary/40{% endif %}" style="width: {% if info.breakdown %}{{ c.value }}{% else %}{{ c.weight }}{% endif %}%"></div>
+          </div>
+          {% if info.breakdown %}<p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">{{ c.value }} % de réussite sur ce critère</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if info.breakdown %}
+      <ul class="pt-space-md border-t border-surface-container-high space-y-space-xs font-body-sm text-body-sm text-on-surface-variant">
+        <li class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-[16px] {% if info.exact %}text-secondary{% else %}text-amber-600{% endif %}">{% if info.exact %}check_circle{% else %}schedule{% endif %}</span>
+          {% if info.exact %}Votre plage horaire est respectée{% else %}Plage la plus proche de votre demande{% endif %}
+        </li>
+        {% if info.distance_km != None %}
+        <li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary">near_me</span>À {{ info.distance_km }} km de chez vous</li>
+        {% endif %}
+        {% if appt.excluded_provider_ids %}
+        <li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-primary">autorenew</span>Réattribuée : {{ appt.excluded_provider_ids|length }} prestataire{{ appt.excluded_provider_ids|length|pluralize }} sollicité{{ appt.excluded_provider_ids|length|pluralize }} avant celui-ci</li>
+        {% endif %}
+      </ul>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if refresh %}
+<script>setTimeout(function () { window.location.reload(); }, 15000);</script>
+{% endif %}
+{% endblock %}

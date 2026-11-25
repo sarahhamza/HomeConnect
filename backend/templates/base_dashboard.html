@@ -22,6 +22,12 @@
     </div>
     <div class="flex items-center gap-space-md">
       {% block header_action %}{% endblock %}
+      {% if user.is_staff %}
+      <a href="{% url 'ai_dashboard' %}" title="Supervision du matching IA"
+         class="hidden md:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl bg-primary-fixed text-on-primary-fixed font-label-lg text-label-lg hover:opacity-90 transition-all">
+        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>Service IA
+      </a>
+      {% endif %}
       <div class="relative flex items-center justify-center p-space-xs rounded-xl hover:bg-surface-container text-on-surface-variant hover:text-on-surface cursor-pointer">
         <span class="material-symbols-outlined">notifications</span>
         <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-surface-container-lowest"></span>

@@ -1,0 +1,265 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Service IA · HomeConnect{% endblock %}
+
+{% block role_pills %}
+  <span class="px-space-sm py-space-xs rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm uppercase tracking-wider font-semibold">Supervision</span>
+{% endblock %}
+
+{% block header_action %}
+  <a href="{% url 'ai_dashboard' %}"
+     class="hidden sm:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl border border-outline-variant text-primary font-label-lg text-label-lg hover:bg-surface-container transition-all">
+    <span class="material-symbols-outlined text-[18px]">refresh</span>Actualiser
+  </a>
+{% endblock %}
+
+{% block space_label %}Service IA{% endblock %}
+{% block support_label %}Matching automatique{% endblock %}
+
+{% block sidebar_nav %}
+  <a href="{% url 'ai_dashboard' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg bg-surface-container text-primary">
+    <span class="material-symbols-outlined text-[20px]">auto_awesome</span>Service IA
+  </a>
+  <a href="{% url 'home' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
+    <span class="material-symbols-outlined text-[20px]">home</span>Retour à l'accueil
+  </a>
+  <a href="{% url 'profile' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
+    <span class="material-symbols-outlined text-[20px]">account_circle</span>Mon profil
+  </a>
+{% endblock %}
+
+{% block sidebar_card %}
+  <div class="p-space-md rounded-xl bg-surface-container-low">
+    <p class="font-label-lg text-label-lg flex items-center gap-space-xs {% if health.ok %}text-secondary{% else %}text-error{% endif %}">
+      <span class="material-symbols-outlined text-[18px]">{% if health.ok %}check_circle{% else %}error{% endif %}</span>{% if health.ok %}Moteur en ligne{% else %}Moteur hors ligne{% endif %}
+    </p>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% if health.ok %}Les demandes sont attribuées en temps réel.{% else %}Les demandes restent « en recherche » et sont relancées automatiquement.{% endif %}</p>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col w-full gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-primary">Service IA de matching</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">Santé du moteur, poids du score, simulateur et historique des attributions.</p>
+    </div>
+    <span class="self-start md:self-auto inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full font-label-lg text-label-lg font-semibold
+      {% if health.ok %}bg-secondary-container text-on-secondary-container{% else %}bg-error-container text-on-error-container{% endif %}">
+      <span class="relative flex w-2.5 h-2.5">
+        {% if health.ok %}<span class="absolute inline-flex w-full h-full rounded-full bg-secondary opacity-60 animate-ping"></span>{% endif %}
+        <span class="relative inline-flex w-2.5 h-2.5 rounded-full {% if health.ok %}bg-secondary{% else %}bg-error{% endif %}"></span>
+      </span>
+      {% if health.ok %}En ligne · {{ health.latency_ms }} ms{% elif health.auth_error %}Clé API refusée{% else %}Hors ligne{% endif %}
+    </span>
+  </div>
+
+  {% if not health.ok %}
+  <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-error-container text-on-error-container font-body-sm text-body-sm">
+    <span class="material-symbols-outlined text-[20px]">error</span>
+    <div>
+      {% if health.auth_error %}
+      <p><b>Le service FastAPI répond mais refuse la clé API.</b></p>
+      <p class="mt-1">Vérifiez que <code class="px-1.5 py-0.5 rounded bg-white/60 font-mono text-[12px]">HOMECONNECT_AI_KEY</code> dans <code class="px-1.5 py-0.5 rounded bg-white/60 font-mono text-[12px]">settings.py</code> est identique à la variable d'environnement définie au lancement d'uvicorn.</p>
+      {% else %}
+      <p><b>Le service FastAPI ne répond pas</b>{% if health.error %} ({{ health.error }}){% endif %}.</p>
+      <p class="mt-1">Lancez-le avec <code class="px-1.5 py-0.5 rounded bg-white/60 font-mono text-[12px]">uvicorn app.main:app --port 8001</code> depuis le dossier <code class="px-1.5 py-0.5 rounded bg-white/60 font-mono text-[12px]">ai_service</code>.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ===== KPI ===== -->
+  <div class="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-gutter">
+    {% for label, value, icon, tone in kpis %}
+    <div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center gap-space-sm">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0
+        {% if tone == 'ok' %}bg-secondary-container text-on-secondary-container
+        {% elif tone == 'warn' %}bg-[#FEF3C7] text-[#D97706]
+        {% elif tone == 'bad' %}bg-error-container text-on-error-container
+        {% else %}bg-primary-fixed text-on-primary-fixed{% endif %}">
+        <span class="material-symbols-outlined text-[22px]">{{ icon }}</span>
+      </div>
+      <div class="min-w-0">
+        <p class="font-label-md text-label-md text-on-surface-variant truncate">{{ label }}</p>
+        <p class="font-headline-md text-headline-md text-primary font-bold leading-tight">{{ value }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+
+    <!-- ===== Formule + paramètres ===== -->
+    <section class="xl:col-span-5 bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-space-xs">
+        <span class="material-symbols-outlined text-primary text-[22px]">functions</span>
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Formule du score</h2>
+      </div>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Chaque critère est noté de 0 à 100, puis pondéré. Les prestataires libres sur la plage demandée passent avant ceux qu'il faudrait décaler.</p>
+
+      <div class="space-y-space-md">
+        {% for key, label, icon, pct in weight_rows %}
+        <div>
+          <div class="flex items-center justify-between font-label-md text-label-md text-on-surface">
+            <span class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-primary">{{ icon }}</span>{{ label }}</span>
+            <span class="font-bold">{{ pct }} %</span>
+          </div>
+          <div class="h-2.5 mt-1 rounded-full bg-surface-container overflow-hidden">
+            <div class="h-full rounded-full {% if key == 'rating' %}bg-primary{% elif key == 'proximity' %}bg-secondary{% elif key == 'availability' %}bg-tertiary-container{% else %}bg-outline{% endif %}" style="width: {{ pct }}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if health.ok and health.config %}
+      <dl class="grid grid-cols-2 gap-space-sm pt-space-md border-t border-surface-container-high">
+        <div class="bg-surface-container-low rounded-lg p-space-sm"><dt class="font-label-sm text-label-sm text-outline uppercase font-semibold">Version</dt><dd class="font-label-lg text-label-lg text-on-surface font-semibold mt-0.5">{{ health.config.version }}</dd></div>
+        <div class="bg-surface-container-low rounded-lg p-space-sm"><dt class="font-label-sm text-label-sm text-outline uppercase font-semibold">Délai minimum</dt><dd class="font-label-lg text-label-lg text-on-surface font-semibold mt-0.5">{{ health.config.min_lead_hours }} h</dd></div>
+        <div class="bg-surface-container-low rounded-lg p-space-sm"><dt class="font-label-sm text-label-sm text-outline uppercase font-semibold">Note des nouveaux</dt><dd class="font-label-lg text-label-lg text-on-surface font-semibold mt-0.5">{{ health.config.prior_rating }} / 5</dd></div>
+        <div class="bg-surface-container-low rounded-lg p-space-sm"><dt class="font-label-sm text-label-sm text-outline uppercase font-semibold">Charge saturée</dt><dd class="font-label-lg text-label-lg text-on-surface font-semibold mt-0.5">{{ health.config.max_load }} RDV</dd></div>
+        <div class="bg-surface-container-low rounded-lg p-space-sm"><dt class="font-label-sm text-label-sm text-outline uppercase font-semibold">Tolérance d'écart</dt><dd class="font-label-lg text-label-lg text-on-surface font-semibold mt-0.5">{{ health.config.availability_decay_hours }} h</dd></div>
+        <div class="bg-surface-container-low rounded-lg p-space-sm"><dt class="font-label-sm text-label-sm text-outline uppercase font-semibold">Proximité inconnue</dt><dd class="font-label-lg text-label-lg text-on-surface font-semibold mt-0.5">neutre</dd></div>
+      </dl>
+      {% endif %}
+    </section>
+
+    <!-- ===== Simulateur ===== -->
+    <section class="xl:col-span-7 bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-space-xs">
+        <span class="material-symbols-outlined text-primary text-[22px]">science</span>
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Simulateur</h2>
+        <span class="font-label-sm text-label-sm bg-surface-container text-on-surface-variant px-space-sm py-0.5 rounded-full">Rien n'est enregistré</span>
+      </div>
+
+      <form method="get" class="grid grid-cols-2 md:grid-cols-12 gap-space-sm items-end">
+        <div class="col-span-2 md:col-span-4">
+          <label class="block font-label-sm text-label-sm text-outline uppercase font-semibold mb-1" for="sim-category">Catégorie</label>
+          <select id="sim-category" name="category" class="w-full h-11 px-3 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+            {% for value, label in categories %}<option value="{{ value }}" {% if value == sim.category %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-span-1 md:col-span-4">
+          <label class="block font-label-sm text-label-sm text-outline uppercase font-semibold mb-1" for="sim-date">Date</label>
+          <input id="sim-date" type="date" name="date" value="{{ sim.date }}" class="w-full h-11 px-3 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+        </div>
+        <div class="col-span-1 md:col-span-4">
+          <label class="block font-label-sm text-label-sm text-outline uppercase font-semibold mb-1" for="sim-slot">Plage</label>
+          <select id="sim-slot" name="slot" class="w-full h-11 px-3 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+            {% for value, label in slots %}<option value="{{ value }}" {% if value == sim.slot %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <label class="col-span-1 md:col-span-6 flex items-center gap-2 h-11 cursor-pointer select-none font-label-md text-label-md text-on-surface">
+          <input type="checkbox" name="urgent" class="w-4 h-4 rounded text-secondary focus:ring-secondary" {% if sim.urgent %}checked{% endif %}>Urgence (prestataires avec astreinte uniquement)
+        </label>
+        <button type="submit" name="simulate" value="1" class="col-span-1 md:col-span-6 md:justify-self-end md:w-48 h-11 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-space-xs transition-colors shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">play_arrow</span>Simuler
+        </button>
+      </form>
+
+      {% if result %}
+        {% if not result.ok %}
+        <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-error-container text-on-error-container font-body-sm text-body-sm">
+          <span class="material-symbols-outlined text-[20px]">error</span><span>Le service IA est injoignable : impossible de simuler.</span>
+        </div>
+        {% elif result.empty %}
+        <div class="text-center py-space-lg bg-surface-container-low rounded-xl">
+          <span class="material-symbols-outlined text-[36px] text-on-surface-variant">search_off</span>
+          <p class="text-on-surface-variant mt-1 font-body-md">Aucun service publié dans cette catégorie.</p>
+        </div>
+        {% else %}
+        <div class="flex flex-col gap-space-sm">
+          {% for m in result.matches %}
+          <article class="rounded-xl p-space-md flex flex-col gap-space-sm {% if forloop.first %}bg-secondary-container/40 ring-1 ring-secondary/30{% else %}bg-surface-container-low{% endif %}">
+            <div class="flex items-center justify-between gap-space-sm flex-wrap">
+              <div class="flex items-center gap-space-sm min-w-0">
+                <div class="w-9 h-9 rounded-full font-label-lg text-label-lg font-bold flex items-center justify-center shrink-0 {% if forloop.first %}bg-secondary text-on-secondary{% else %}bg-primary-container text-on-primary{% endif %}">{{ forloop.counter }}</div>
+                <div class="min-w-0">
+                  <p class="font-label-lg text-label-lg font-semibold text-on-surface truncate">{{ m.name }}</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">
+                    {{ m.slot_day|date:"D d/m" }} ·
+                    {% for value, label in slots %}{% if value == m.slot_key %}{{ label }}{% endif %}{% endfor %}
+                    {% if m.distance_km != None %} · {{ m.distance_km }} km{% endif %}
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-space-xs">
+                {% if m.exact %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">check</span>Plage demandée</span>
+                {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">schedule</span>Décalé</span>
+                {% endif %}
+                <span class="font-headline-sm text-headline-sm font-bold text-primary">{{ m.percent }}<span class="font-label-md text-on-surface-variant"> / 100</span></span>
+              </div>
+            </div>
+            <div class="flex h-3 w-full rounded-full bg-surface-container overflow-hidden">
+              {% for p in m.parts %}<div class="{{ p.cls }} h-full" style="width: {{ p.points }}%" title="{{ p.label }} : {{ p.points }} pts"></div>{% endfor %}
+            </div>
+            <div class="flex flex-wrap gap-x-space-md gap-y-1 font-label-sm text-label-sm text-on-surface-variant">
+              {% for p in m.parts %}<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full {{ p.cls }}"></span>{{ p.label }} {{ p.points }}</span>{% endfor %}
+            </div>
+          </article>
+          {% empty %}
+          <div class="text-center py-space-lg bg-surface-container-low rounded-xl">
+            <span class="material-symbols-outlined text-[36px] text-on-surface-variant">person_off</span>
+            <p class="text-on-surface-variant mt-1 font-body-md">Aucun prestataire retenu pour ces critères.</p>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if result.rejected %}
+        <div class="pt-space-sm border-t border-surface-container-high">
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold mb-space-xs">Écartés</p>
+          <div class="flex flex-wrap gap-space-xs">
+            {% for r in result.rejected %}
+            <span class="inline-flex items-center gap-1 px-space-sm py-1 rounded-full bg-surface-container font-label-md text-label-md text-on-surface-variant"><span class="font-semibold text-on-surface">{{ r.name }}</span> · {{ r.label }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+      {% else %}
+      <p class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low rounded-lg p-space-md">Choisissez une catégorie, une date et une plage : le moteur affiche le classement qu'il donnerait maintenant, avec la contribution de chaque critère.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <!-- ===== Historique ===== -->
+  <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    <div class="p-space-lg pb-space-md flex items-center gap-space-xs">
+      <span class="material-symbols-outlined text-primary text-[22px]">history</span>
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">Dernières demandes automatiques</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left font-body-sm text-body-sm">
+        <thead>
+          <tr class="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase">
+            <th class="px-space-lg py-space-sm font-semibold">Reçue le</th>
+            <th class="px-space-md py-space-sm font-semibold">Client</th>
+            <th class="px-space-md py-space-sm font-semibold">Service</th>
+            <th class="px-space-md py-space-sm font-semibold">Prestataire</th>
+            <th class="px-space-md py-space-sm font-semibold">Statut</th>
+            <th class="px-space-md py-space-sm font-semibold text-right">Score</th>
+            <th class="px-space-lg py-space-sm font-semibold text-right">Réattr.</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-container">
+          {% for a in recent %}
+          <tr class="hover:bg-surface-container-low/60">
+            <td class="px-space-lg py-space-sm text-on-surface-variant whitespace-nowrap">{{ a.created_at|date:"d/m H:i" }}</td>
+            <td class="px-space-md py-space-sm text-on-surface font-medium">{{ a.client.username }}</td>
+            <td class="px-space-md py-space-sm text-on-surface-variant">{{ a.service.get_category_display }}</td>
+            <td class="px-space-md py-space-sm text-on-surface">{% if a.provider %}{{ a.provider.get_full_name|default:a.provider.username }}{% else %}<span class="text-on-surface-variant italic">—</span>{% endif %}</td>
+            <td class="px-space-md py-space-sm">{% include "appointments/_status_badge.html" with appointment=a %}</td>
+            <td class="px-space-md py-space-sm text-right font-semibold text-primary">{% if a.match_percent != None %}{{ a.match_percent }} %{% else %}<span class="text-outline font-normal">—</span>{% endif %}</td>
+            <td class="px-space-lg py-space-sm text-right text-on-surface-variant">{{ a.excluded_provider_ids|length }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="px-space-lg py-space-xl text-center text-on-surface-variant">Aucune demande automatique pour le moment.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -12,20 +12,19 @@ Les RDV réservés directement par le client (assigned_at vide) ne sont jamais t
 """
 from datetime import timedelta
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from appointments.matching import assign_provider, release_and_reassign
 from appointments.models import Appointment
 
-REASSIGN_AFTER = timedelta(hours=2)
-
 
 class Command(BaseCommand):
     help = "Réattribue les rendez-vous sans réponse du prestataire après 2 h."
 
     def handle(self, *args, **options):
-        limit = timezone.now() - REASSIGN_AFTER
+        limit = timezone.now() - timedelta(hours=getattr(settings, "REASSIGN_AFTER_HOURS", 2))
         seen, done = set(), 0
 
         stale = Appointment.objects.filter(

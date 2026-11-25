@@ -192,3 +192,9 @@ def test_provider_min_lead_hours_is_respected():
     assert r.matches[0].slot_start == datetime(2026, 11, 26, 8, 0)
     r2 = match(req([provider("rapide", min_lead_hours=2)]), now=NOW)
     assert r2.matches[0].slot_start == DESIRED
+
+
+def test_config_endpoint_exposes_weights():
+    c = TestClient(app).get("/config").json()
+    assert c["weights"] == {"rating": 0.4, "proximity": 0.3, "availability": 0.2, "load": 0.1}
+    assert c["min_lead_hours"] == 2

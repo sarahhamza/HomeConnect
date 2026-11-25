@@ -29,6 +29,9 @@ log = logging.getLogger(__name__)
 
 ACTIVE = (Appointment.Status.PENDING, Appointment.Status.CONFIRMED)
 SLOT_MINUTES = 120
+# Poids du score (identiques à ai_service/app/scoring.py) : conservés dans match_info
+# pour que les pages affichent « Note 40 %, Proximité 30 %... » sans rappeler l'IA.
+WEIGHTS = {"rating": 0.4, "proximity": 0.3, "availability": 0.2, "load": 0.1}
 DEFAULT_WEEKLY = [{"weekday": d, "start": "08:00", "end": "18:00"} for d in range(6)]  # lun-sam
 
 
@@ -122,20 +125,104 @@ def build_payload(appt: Appointment) -> dict:
             for k in Appointment.Slot.values
         ],
         "exclude_provider_ids": [str(i) for i in appt.excluded_provider_ids],
+        "top_n": 50,                                  # tous les candidats (pour « N comparés »)
         "providers": providers,
     }
 
 
-def _call_ai(payload: dict) -> list[dict] | None:
-    headers = {"X-API-Key": settings.HOMECONNECT_AI_KEY} if settings.HOMECONNECT_AI_KEY else {}
+def _headers() -> dict:
+    key = getattr(settings, "HOMECONNECT_AI_KEY", "")
+    return {"X-API-Key": key} if key else {}
+
+
+def _post_match(payload: dict) -> dict | None:
+    """Réponse complète du service ({matches, rejected}) ou None s'il est injoignable."""
     try:
         r = httpx.post(f"{settings.HOMECONNECT_AI_URL}/match", json=payload,
-                       headers=headers, timeout=5)
+                       headers=_headers(), timeout=5)
         r.raise_for_status()
-        return r.json()["matches"]
+        data = r.json()
+        data["matches"]                                # KeyError si réponse inattendue
+        return data
     except (httpx.HTTPError, KeyError, ValueError):
         log.exception("Service de matching injoignable")
         return None
+
+
+def _call_ai(payload: dict) -> list[dict] | None:
+    data = _post_match(payload)
+    return None if data is None else data["matches"]
+
+
+# ------------------------------------------------------------------ pages : aperçu et santé
+REASON_LABELS = {
+    "excluded": "Déjà sollicité pour cette demande",
+    "category": "Catégorie non proposée",
+    "out_of_zone": "Hors zone d'intervention",
+    "no_slot": "Aucun créneau libre",
+}
+
+
+def display_name(user) -> str:
+    return user.get_full_name() or user.username
+
+
+def reference_service(category: str, urgent: bool = False):
+    """Service « de référence » d'une catégorie (le moins cher) : sert de support à une
+    demande automatique, l'IA le remplace par celui du prestataire retenu."""
+    qs = Service.objects.filter(is_active=True, category=category)
+    if urgent:
+        qs = qs.filter(has_urgency=True)
+    return qs.order_by("price").first()
+
+
+def preview_matches(category: str, day: date, slot: str, urgent: bool = False) -> dict:
+    """Classement que l'IA donnerait à cet instant, SANS rien enregistrer (page staff)."""
+    service = reference_service(category, urgent)
+    if service is None:
+        return {"ok": True, "matches": [], "rejected": [], "empty": True}
+    probe = Appointment(service=service, date=day, time_slot=slot, urgent=urgent,
+                        excluded_provider_ids=[])
+    data = _post_match(build_payload(probe))
+    if data is None:
+        return {"ok": False, "matches": [], "rejected": []}
+
+    ids = {m["provider_id"] for m in data["matches"]} | {r["provider_id"] for r in data["rejected"]}
+    names = {str(u.pk): display_name(u) for u in User.objects.filter(pk__in=ids)}
+    for m in data["matches"]:
+        m["name"] = names.get(m["provider_id"], m["provider_id"])
+        m["percent"] = round(m["score"] * 100)
+        m["slot_day"] = datetime.fromisoformat(m["slot_start"]).date()
+    for r in data["rejected"]:
+        r["name"] = names.get(r["provider_id"], r["provider_id"])
+        r["label"] = REASON_LABELS.get(r["reason"], r["reason"])
+    return {"ok": True, "matches": data["matches"], "rejected": data["rejected"], "empty": False}
+
+
+def ai_health() -> dict:
+    """État du service FastAPI : {ok, latency_ms, config, error, auth_error}.
+
+    auth_error : le service répond mais refuse la clé (HOMECONNECT_AI_KEY différente) :
+    le matching échouerait aussi, donc ok=False.
+    """
+    base = settings.HOMECONNECT_AI_URL
+    started = timezone.now()
+    try:
+        httpx.get(f"{base}/health", timeout=2).raise_for_status()
+    except httpx.HTTPError as exc:
+        return {"ok": False, "latency_ms": None, "config": {}, "error": type(exc).__name__,
+                "auth_error": False}
+    latency = int((timezone.now() - started).total_seconds() * 1000)
+    try:
+        r = httpx.get(f"{base}/config", headers=_headers(), timeout=2)
+        if r.status_code in (401, 403):
+            return {"ok": False, "latency_ms": latency, "config": {}, "error": "",
+                    "auth_error": True}
+        r.raise_for_status()
+        cfg = r.json()
+    except (httpx.HTTPError, ValueError):
+        cfg = {}
+    return {"ok": True, "latency_ms": latency, "config": cfg, "error": "", "auth_error": False}
 
 
 def _service_of(provider_pk: str, appt: Appointment):
@@ -178,6 +265,15 @@ def assign_provider(appt: Appointment) -> bool:
         appt.total_price = service.estimate(urgent=appt.urgent)["total"]   # tarif du prestataire
         appt.status = Appointment.Status.PENDING
         appt.assigned_at = timezone.now()
+        appt.match_info = {
+            "score": m.get("score"),
+            "breakdown": m.get("breakdown", {}),
+            "exact": m.get("exact", True),
+            "distance_km": m.get("distance_km"),
+            "weights": WEIGHTS,
+            "compared": len(matches),                 # prestataires éligibles comparés
+            "attempt": len(appt.excluded_provider_ids) + 1,
+        }
         try:
             appt.save()                               # contrainte unique_active_slot_per_provider
             return True
@@ -193,6 +289,7 @@ def _mark_unmatched(appt: Appointment) -> bool:
     appt.time_slot = appt.requested_slot or appt.time_slot
     appt.status = Appointment.Status.UNMATCHED
     appt.assigned_at = None
+    appt.match_info = {}
     appt.save()
     return False
 
@@ -204,6 +301,7 @@ def release_and_reassign(appt: Appointment) -> bool:
     appt.provider = None
     appt.status = Appointment.Status.SEARCHING
     appt.assigned_at = None
+    appt.match_info = {}
     appt.date = appt.requested_date or appt.date
     appt.time_slot = appt.requested_slot or appt.time_slot
     appt.save()

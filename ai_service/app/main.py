@@ -4,6 +4,7 @@ import secrets
 from fastapi import Depends, FastAPI, Header, HTTPException
 
 from .schemas import MatchRequest, MatchResponse
+from . import scoring
 from .scoring import match
 
 app = FastAPI(title="HomeConnect AI", version="1.0.0")
@@ -20,6 +21,20 @@ def check_api_key(x_api_key: str | None = Header(default=None)) -> None:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/config", dependencies=[Depends(check_api_key)])
+def config() -> dict:
+    """Paramètres actifs du moteur : affichés dans la page de supervision de Django."""
+    return {
+        "version": app.version,
+        "weights": scoring.WEIGHTS,
+        "min_lead_hours": scoring.MIN_LEAD_HOURS,
+        "availability_decay_hours": scoring.AVAILABILITY_DECAY_H,
+        "prior_rating": scoring.PRIOR_RATING,
+        "max_load": scoring.MAX_LOAD,
+        "neutral_proximity": scoring.NEUTRAL_PROXIMITY,
+    }
 
 
 @app.post("/match", response_model=MatchResponse, dependencies=[Depends(check_api_key)])

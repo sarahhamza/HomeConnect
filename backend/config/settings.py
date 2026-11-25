@@ -78,10 +78,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 HOMECONNECT_AI_URL = "http://127.0.0.1:8001"
-HOMECONNECT_AI_KEY = ""                      # = HOMECONNECT_AI_KEY du service FastAPI
-MAX_ASSIGN_ATTEMPTS = 3                      # prestataires essayés avant "unmatched"
-MATCHING_DEFAULT_AVAILABILITY = False        # True (démo) : sans horaires saisis, lun-sam 8h-18h
-
+HOMECONNECT_AI_KEY = ""
+MAX_ASSIGN_ATTEMPTS = 3
+REASSIGN_AFTER_HOURS = 2
+MATCHING_DEFAULT_AVAILABILITY = False
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
