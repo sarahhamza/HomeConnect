@@ -3,6 +3,8 @@
 - auto_request           (client)    demande « trouver un prestataire automatiquement »
 - match_detail           (client)    suivi de l'attribution : étapes, prestataire, score détaillé
 - provider_match_action  (prestataire) confirmer / refuser une demande attribuée par l'IA
+- provider_open_requests (prestataire) demandes à pourvoir classées par score de compatibilité
+- provider_take_request  (prestataire) intervenir sur une demande ouverte
 - ai_dashboard           (staff)     santé du service IA, poids du score, simulateur, historique
 """
 from collections import Counter
@@ -19,8 +21,8 @@ from django.views.decorators.http import require_POST
 from services.models import Service
 
 from .matching import (
-    WEIGHTS, ai_health, assign_provider, preview_matches, reference_service,
-    release_and_reassign,
+    REQUEST_WEIGHTS, WEIGHTS, ai_health, assign_provider, preview_matches, rank_open_requests,
+    reference_service, release_and_reassign, take_request,
 )
 from .matching_forms import AutoRequestForm
 from .models import Appointment, Review
@@ -32,6 +34,12 @@ CRITERIA = [  # ordre et libellés d'affichage des 4 critères du score
     ("proximity", "Proximité", "near_me"),
     ("availability", "Disponibilité", "event_available"),
     ("load", "Charge de travail", "balance"),
+]
+REQUEST_CRITERIA = [  # critères du score côté prestataire (voir REQUEST_WEIGHTS)
+    ("proximity", "Proximité", "near_me"),
+    ("availability", "Votre disponibilité", "event_available"),
+    ("price", "Tarif", "payments"),
+    ("priority", "Urgence et attente", "priority_high"),
 ]
 PART_CLASSES = {"rating": "bg-primary", "proximity": "bg-secondary",
                 "availability": "bg-tertiary-container", "load": "bg-outline"}
@@ -160,6 +168,37 @@ def provider_match_action(request, pk):
     if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}):
         return redirect(nxt)
     return redirect("provider_appointments")
+
+
+@login_required
+def provider_open_requests(request):
+    """Demandes sans prestataire, classées par score de compatibilité pour CE prestataire."""
+    if request.user.role != "provider":
+        return redirect("home")
+    result = rank_open_requests(request.user)
+    for m in result["items"]:
+        b = m["breakdown"]
+        m["criteria"] = [
+            {"label": label, "icon": icon, "value": round(float(b.get(k, 0)) * 100),
+             "weight": round(REQUEST_WEIGHTS[k] * 100),
+             "points": round(float(b.get(k, 0)) * REQUEST_WEIGHTS[k] * 100)}
+            for k, label, icon in REQUEST_CRITERIA
+        ]
+    return render(request, "appointments/provider_open_requests.html", {
+        "result": result,
+        "weights": [(label, icon, round(REQUEST_WEIGHTS[k] * 100)) for k, label, icon in REQUEST_CRITERIA],
+    })
+
+
+@login_required
+@require_POST
+def provider_take_request(request, pk):
+    """Intervenir sur une demande ouverte : elle devient CONFIRMÉE pour ce prestataire."""
+    if request.user.role != "provider":
+        return redirect("home")
+    ok, message = take_request(request.user, pk)
+    (messages.success if ok else messages.error)(request, message)
+    return redirect("provider_appointments" if ok else "provider_open_requests")
 
 
 # ------------------------------------------------------------------ staff : service IA

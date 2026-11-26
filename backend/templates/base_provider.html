@@ -26,6 +26,8 @@
      class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'service_create' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Ajouter un service</a>
   <a href="{% url 'provider_requests' %}"
      class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'provider_requests' or n == 'offer_create' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Demandes clients</a>
+  <a href="{% url 'provider_open_requests' %}"
+     class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'provider_open_requests' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Demandes à pourvoir</a>
   <a href="{% url 'provider_appointments' %}"
      class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'provider_appointments' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">Mes interventions</a>
   <a href="#" class="flex items-center px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">Messagerie</a>

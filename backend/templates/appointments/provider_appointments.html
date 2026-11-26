@@ -4,9 +4,13 @@
 {% block content %}
 <div class="flex flex-col w-full space-y-6">
 
-  <div>
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+    <div>
     <h1 class="font-headline-lg text-headline-lg text-primary">Mes interventions</h1>
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Les réservations de vos clients : confirmez, refusez ou clôturez-les ici.</p>
+    </div>
+    <a href="{% url 'provider_requests' %}" class="inline-flex items-center gap-1 h-10 px-4 rounded-lg bg-primary-fixed text-on-primary-fixed font-label-lg text-label-lg hover:opacity-90 transition self-start">
+      <span class="material-symbols-outlined text-[18px]">travel_explore</span>Demandes disponibles</a>
   </div>
 
   <!-- Filtres par statut -->

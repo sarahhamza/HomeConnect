@@ -3,9 +3,9 @@ import secrets
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 
-from .schemas import MatchRequest, MatchResponse
+from .schemas import MatchRequest, MatchResponse, RankRequestsRequest, RankRequestsResponse
 from . import scoring
-from .scoring import match
+from .scoring import match, rank_requests
 
 app = FastAPI(title="HomeConnect AI", version="1.0.0")
 
@@ -34,9 +34,18 @@ def config() -> dict:
         "prior_rating": scoring.PRIOR_RATING,
         "max_load": scoring.MAX_LOAD,
         "neutral_proximity": scoring.NEUTRAL_PROXIMITY,
+        "request_weights": scoring.REQUEST_WEIGHTS,
+        "price_ref": scoring.PRICE_REF,
+        "priority_wait_hours": scoring.PRIORITY_WAIT_H,
     }
 
 
 @app.post("/match", response_model=MatchResponse, dependencies=[Depends(check_api_key)])
 def post_match(req: MatchRequest) -> MatchResponse:
     return match(req)
+
+
+@app.post("/rank-requests", response_model=RankRequestsResponse, dependencies=[Depends(check_api_key)])
+def post_rank_requests(req: RankRequestsRequest) -> RankRequestsResponse:
+    """Matching inverse : classe les demandes ouvertes pour un prestataire."""
+    return rank_requests(req)

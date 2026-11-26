@@ -7,7 +7,8 @@ import math
 from datetime import datetime, timedelta
 
 from .schemas import (
-    Location, Match, MatchRequest, MatchResponse, ProviderIn, Rejected,
+    Location, Match, MatchRequest, MatchResponse, ProviderIn, RankedRequest,
+    RankRequestsRequest, RankRequestsResponse, Rejected, RequestScoreBreakdown,
     ScoreBreakdown, SlotDef,
 )
 
@@ -20,6 +21,14 @@ PRIOR_WEIGHT = 5          # équivaut à 5 avis "fictifs" à PRIOR_RATING
 MAX_LOAD = 10             # au-delà, la charge est considérée comme saturée
 AVAILABILITY_DECAY_H = 24  # écart de 24 h avec l'heure souhaitée -> score ~0.37
 NEUTRAL_PROXIMITY = 0.5   # score de proximité quand une des deux positions est inconnue
+
+# --- Matching inverse (le prestataire classe les demandes ouvertes) ---
+# Note et charge sont identiques pour toutes les demandes d'un même prestataire :
+# elles ne départageraient rien. On classe donc sur ce qui varie d'une demande à l'autre.
+REQUEST_WEIGHTS = {"proximity": 0.35, "availability": 0.30, "price": 0.20, "priority": 0.15}
+PRICE_REF = 200.0         # DT : à partir de ce tarif, le critère « tarif » vaut 1
+PRIORITY_WAIT_H = 24      # une demande qui attend depuis 24 h a la priorité maximale
+NEUTRAL_PRICE = 0.5       # tarif inconnu
 
 
 def haversine_km(a: Location, b: Location) -> float:
@@ -161,3 +170,68 @@ def match(req: MatchRequest, now: datetime | None = None) -> MatchResponse:
         req.prefer_exact_slot and not m.exact, -m.score, m.slot_start, m.provider_id,
     ))
     return MatchResponse(matches=matches[: req.top_n], rejected=rejected)
+
+
+# ---------------------------------------------------------------------------
+# Matching inverse : demandes ouvertes -> classement pour un prestataire
+# ---------------------------------------------------------------------------
+def price_score(price: float | None) -> float:
+    if price is None:
+        return NEUTRAL_PRICE
+    return min(max(price, 0.0) / PRICE_REF, 1.0)
+
+
+def priority_score(urgent: bool, waiting_hours: float) -> float:
+    """Urgence = priorité maximale ; sinon elle monte avec l'attente (équité)."""
+    if urgent:
+        return 1.0
+    return min(max(waiting_hours, 0.0) / PRIORITY_WAIT_H, 1.0)
+
+
+def rank_requests(req: RankRequestsRequest, now: datetime | None = None) -> RankRequestsResponse:
+    """Classe les demandes ouvertes pour `req.provider`.
+
+    score = proximité*0.35 + disponibilité*0.30 + tarif*0.20 + priorité*0.15
+    Une demande est écartée si : mauvais métier, hors zone, aucun créneau libre.
+    """
+    now = now or datetime.now()
+    p = req.provider
+    lead = MIN_LEAD_HOURS if p.min_lead_hours is None else p.min_lead_hours
+    provider_cats = {c.strip().lower() for c in p.categories}
+    ranked: list[RankedRequest] = []
+    rejected: list[Rejected] = []
+
+    for r in req.requests:
+        if r.category.strip().lower() not in provider_cats:
+            rejected.append(Rejected(provider_id=r.id, reason="category"))
+            continue
+        distance = None
+        if r.location is not None and p.location is not None:
+            distance = haversine_km(r.location, p.location)
+            if distance > p.radius_km:
+                rejected.append(Rejected(provider_id=r.id, reason="out_of_zone"))
+                continue
+        slot = find_slot(p, r.desired_at, r.duration_minutes, r.horizon_days or req.horizon_days,
+                         now, req.slots, lead_hours=lead)
+        if slot is None:
+            rejected.append(Rejected(provider_id=r.id, reason="no_slot"))
+            continue
+
+        parts = RequestScoreBreakdown(
+            proximity=NEUTRAL_PROXIMITY if distance is None else proximity_score(distance, p.radius_km),
+            availability=availability_score(slot[0] - r.desired_at),
+            price=price_score(r.price),
+            priority=priority_score(r.urgent, r.waiting_hours),
+        )
+        total = sum(getattr(parts, k) * w for k, w in REQUEST_WEIGHTS.items())
+        ranked.append(RankedRequest(
+            request_id=r.id,
+            score=round(total, 4),
+            slot_start=slot[0], slot_end=slot[1], slot_key=slot[2],
+            exact=slot[0] == r.desired_at,
+            distance_km=None if distance is None else round(distance, 2),
+            breakdown=RequestScoreBreakdown(**{k: round(v, 4) for k, v in parts.model_dump().items()}),
+        ))
+
+    ranked.sort(key=lambda m: (-m.score, m.slot_start, m.request_id))
+    return RankRequestsResponse(ranked=ranked[: req.top_n], rejected=rejected)

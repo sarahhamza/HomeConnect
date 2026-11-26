@@ -181,6 +181,16 @@
 
   <!-- ===== COLONNE DROITE : pourquoi ce prestataire ===== -->
   <div class="lg:col-span-5 flex flex-col gap-space-lg lg:sticky lg:top-36">
+    {% if info.by == "provider" %}
+    <section class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary text-[22px]">handyman</span><h3 class="font-headline-sm text-headline-sm text-on-surface">Un prestataire est intervenu</h3></div>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Aucun prestataire n'était disponible immédiatement : un professionnel a choisi de prendre votre demande.</p>
+      <ul class="space-y-space-xs font-body-sm text-body-sm text-on-surface-variant">
+        <li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] {% if info.exact %}text-secondary{% else %}text-amber-600{% endif %}">{% if info.exact %}check_circle{% else %}schedule{% endif %}</span>{% if info.exact %}Votre plage horaire est respectée{% else %}Plage la plus proche de votre demande{% endif %}</li>
+        {% if info.distance_km != None %}<li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary">near_me</span>À {{ info.distance_km }} km de chez vous</li>{% endif %}
+      </ul>
+    </section>
+    {% else %}
     <section class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col gap-space-md">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-space-xs">
@@ -238,6 +248,7 @@
       </ul>
       {% endif %}
     </section>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

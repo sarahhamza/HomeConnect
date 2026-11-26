@@ -1,0 +1,143 @@
+{% extends "base_provider.html" %}
+{% block title %}Demandes à pourvoir · HomeConnect{% endblock %}
+
+{% block content %}
+<div class="flex flex-col w-full space-y-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-primary">Demandes à pourvoir</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">Les demandes clients sans prestataire, classées de la plus à la moins adaptée à votre profil.</p>
+    </div>
+    <a href="{% url 'provider_appointments' %}" class="inline-flex items-center gap-1 h-10 px-4 rounded-lg border border-outline-variant text-on-surface font-label-lg text-label-lg hover:bg-surface-container transition self-start">
+      <span class="material-symbols-outlined text-[18px]">assignment</span>Mes interventions
+    </a>
+  </div>
+
+  <!-- Comment le classement est calculé -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+    <span class="flex items-center gap-1 font-label-lg text-label-lg text-primary"><span class="material-symbols-outlined text-[20px]">auto_awesome</span>Score de compatibilité</span>
+    {% for label, icon, pct in weights %}
+    <span class="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-primary">{{ icon }}</span>{{ label }} <b class="text-on-surface">{{ pct }} %</b></span>
+    {% endfor %}
+  </div>
+
+  {% if not result.ok %}
+  <div class="flex items-start gap-3 p-4 rounded-xl bg-error-container text-on-error-container font-body-md text-body-md">
+    <span class="material-symbols-outlined">cloud_off</span>
+    <span><b>Classement indisponible.</b> Le service IA ne répond pas : réessayez dans un instant.</span>
+  </div>
+  {% endif %}
+
+  <div class="space-y-4">
+    {% for m in result.items %}
+    <article class="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 space-y-4">
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-11 h-11 rounded-full bg-primary-container text-on-primary font-bold flex items-center justify-center shrink-0">{{ forloop.counter }}</div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold truncate">{% if m.title %}{{ m.title }}{% else %}{{ m.category_label }}{% endif %}</h3>
+              {% if m.kind == "request" %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-primary-container text-on-primary font-semibold">Besoin client · {{ m.category_label }}</span>{% endif %}
+              {% if m.urgent %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error text-on-error font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">emergency</span>Urgent</span>{% endif %}
+              {% if m.exact %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold">Plage respectée</span>{% else %}<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] font-semibold">Plage décalée</span>{% endif %}
+            </div>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Votre service : {{ m.service.name }} · en attente depuis {{ m.created_at|timesince }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 self-start sm:self-auto">
+          <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background: conic-gradient(#006d3d {{ m.percent }}%, #d8e3fb 0); border-radius: 9999px">
+            <div class="w-[54px] h-[54px] rounded-full bg-surface-container-lowest flex flex-col items-center justify-center" style="border-radius: 9999px">
+              <span class="font-label-lg text-label-lg font-bold text-secondary leading-none">{{ m.percent }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface-variant">/ 100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-surface-container-low p-4 rounded-lg">
+        <div>
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Créneau proposé</p>
+          <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ m.slot_start|date:"l d/m/Y" }}</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">{{ m.slot_label }}</p>
+        </div>
+        <div>
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Demandé par le client</p>
+          <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">{{ m.wanted_day|date:"d/m/Y" }}</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">{{ m.wanted_slot_label }}</p>
+        </div>
+        <div>
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Distance</p>
+          <p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px] text-primary">location_on</span>{% if m.distance_km != None %}{{ m.distance_km }} km{% else %}Non calculée{% endif %}
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">{% if m.city %}{{ m.city }}{% else %}Adresse après acceptation{% endif %}</p>
+        </div>
+        <div class="md:text-right">
+          <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">Votre tarif</p>
+          <p class="font-headline-md text-headline-md text-secondary font-bold mt-0.5">{{ m.price|floatformat:2 }} <span class="font-body-lg">DT</span></p>
+          {% if m.budget %}<p class="font-body-sm text-body-sm text-on-surface-variant">Budget client : {{ m.budget|floatformat:2 }} DT</p>{% endif %}
+        </div>
+      </div>
+
+      {% if m.description %}
+      <p class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low rounded-lg p-3"><span class="font-semibold text-on-surface">Problème décrit :</span> {{ m.description }}</p>
+      {% endif %}
+
+      <!-- Détail du score -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {% for c in m.criteria %}
+        <div>
+          <div class="flex items-center justify-between font-label-md text-label-md text-on-surface">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">{{ c.icon }}</span>{{ c.label }}</span>
+            <span class="font-bold text-secondary">+{{ c.points }}</span>
+          </div>
+          <div class="h-2 mt-1 rounded-full bg-surface-container overflow-hidden"><div class="h-full rounded-full bg-secondary" style="width: {{ c.value }}%"></div></div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">{{ c.value }} % · poids {{ c.weight }} %</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if not m.exact %}
+      <div class="flex items-start gap-3 p-3 rounded-lg bg-[#FEF3C7] text-[#92400E] font-body-sm text-body-sm">
+        <span class="material-symbols-outlined text-[20px]">schedule</span>
+        <span>{% if m.kind == "request" %}Vous n'êtes pas libre à la plage demandée : le créneau le plus proche vous est suggéré, à proposer au client.{% else %}Vous n'êtes pas libre à la plage demandée : en intervenant, vous prenez le créneau le plus proche et le client en est informé.{% endif %}</span>
+      </div>
+      {% endif %}
+
+      {% if m.kind == "request" %}
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Le client choisit parmi les propositions reçues. Créneau suggéré : {{ m.slot_start|date:"d/m/Y" }} ({{ m.slot_label }}).</p>
+        <a href="{{ m.offer_url }}" class="h-10 px-5 rounded-lg bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition flex items-center gap-1 self-end">
+          <span class="material-symbols-outlined text-[18px]">send</span>Proposer mes services</a>
+      </div>
+      {% else %}
+      <form method="post" action="{% url 'provider_take_request' m.appt.pk %}" class="flex justify-end">
+        {% csrf_token %}
+        <button onclick="return confirm('{% if m.exact %}Intervenir sur cette demande le {{ m.slot_start|date:"d/m/Y" }} ({{ m.slot_label }}) ?{% else %}Le créneau diffère de la demande du client. Intervenir le {{ m.slot_start|date:"d/m/Y" }} ({{ m.slot_label }}) ?{% endif %}')"
+                class="h-10 px-5 rounded-lg bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition flex items-center gap-1">
+          <span class="material-symbols-outlined text-[18px]">handyman</span>Intervenir</button>
+      </form>
+      {% endif %}
+    </article>
+    {% empty %}
+    {% if result.ok %}
+    <div class="text-center py-12 bg-surface-container-lowest rounded-xl shadow-sm">
+      <span class="material-symbols-outlined text-[40px] text-on-surface-variant">{% if result.no_service %}home_repair_service{% else %}inbox{% endif %}</span>
+      <p class="text-on-surface-variant mt-2">
+        {% if result.no_service %}Publiez au moins un service pour voir les demandes de votre catégorie.
+        {% else %}Aucune demande ouverte compatible pour le moment.{% endif %}
+      </p>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if result.hidden %}
+  <p class="font-body-sm text-body-sm text-on-surface-variant text-center">
+    {{ result.hidden }} autre{{ result.hidden|pluralize }} demande{{ result.hidden|pluralize }} de votre catégorie non affichée{{ result.hidden|pluralize }} : hors de vos horaires, hors de votre zone d'intervention, ou sans service correspondant (catégorie, option urgence pour une demande automatique urgente, ou besoin déjà traité).
+  </p>
+  {% endif %}
+</div>
+{% endblock %}
