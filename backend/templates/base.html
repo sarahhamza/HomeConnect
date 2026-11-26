@@ -38,6 +38,9 @@
 
       <nav class="flex items-center gap-3">
         {% if user.is_authenticated %}
+        {% if user.is_staff %}
+  <a href="{% url 'admin_dashboard' %}" class="hidden sm:inline text-sm font-semibold text-on-surface-variant hover:text-primary">Administration</a>
+{% endif %}
         {% if user.role == 'client' %}
   <a href="{% url 'client_dashboard' %}" class="hidden sm:inline text-sm font-semibold text-on-surface-variant hover:text-primary">Mon espace</a>
 {% endif %}

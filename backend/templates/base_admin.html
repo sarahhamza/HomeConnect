@@ -1,0 +1,38 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Administration · HomeConnect{% endblock %}
+
+{% block role_pills %}
+  <span class="px-space-sm py-space-xs rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm uppercase tracking-wider font-semibold">Administration</span>
+{% endblock %}
+
+{% block space_label %}Administration{% endblock %}
+{% block support_label %}Supervision de la plateforme{% endblock %}
+
+{% block sidebar_nav %}
+  <a href="{% url 'admin_dashboard' %}"
+     class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'admin_dashboard' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">
+    <span class="material-symbols-outlined text-[20px]">dashboard</span>Tableau de bord</a>
+  <a href="{% url 'ai_dashboard' %}"
+     class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'ai_dashboard' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">
+    <span class="material-symbols-outlined text-[20px]">auto_awesome</span>Service IA</a>
+  <a href="{% url 'admin:index' %}"
+     class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">
+    <span class="material-symbols-outlined text-[20px]">database</span>Gestion des données</a>
+  <a href="{% url 'home' %}"
+     class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all">
+    <span class="material-symbols-outlined text-[20px]">home</span>Retour à l'accueil</a>
+  <a href="{% url 'profile' %}"
+     class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg transition-all {% if n == 'profile' %}bg-primary-container text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">
+    <span class="material-symbols-outlined text-[20px]">account_circle</span>Mon profil</a>
+{% endblock %}
+
+{% block sidebar_card %}
+  {% if health %}
+  <div class="p-space-md rounded-xl bg-surface-container-low">
+    <p class="font-label-lg text-label-lg flex items-center gap-space-xs {% if health.ok %}text-secondary{% else %}text-error{% endif %}">
+      <span class="material-symbols-outlined text-[18px]">{% if health.ok %}check_circle{% else %}error{% endif %}</span>{% if health.ok %}Moteur IA en ligne{% else %}Moteur IA hors ligne{% endif %}
+    </p>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% if health.ok %}Les demandes sont attribuées en temps réel.{% else %}Les demandes restent « en recherche » et sont relancées automatiquement.{% endif %}</p>
+  </div>
+  {% endif %}
+{% endblock %}

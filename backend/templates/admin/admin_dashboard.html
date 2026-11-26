@@ -1,0 +1,206 @@
+{% extends "base_admin.html" %}
+{% block title %}Tableau de bord · Administration · HomeConnect{% endblock %}
+
+{% block header_action %}
+  <a href="{% url 'admin:index' %}"
+     class="hidden sm:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl bg-secondary text-on-secondary font-label-lg text-label-lg shadow-sm hover:opacity-95 transition-all">
+    <span class="material-symbols-outlined text-[18px]">database</span>Gestion des données
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col w-full gap-space-lg">
+
+  <!-- Titre -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-primary">Tableau de bord</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">Vue d'ensemble de la plateforme · {% now "l d F Y" %}</p>
+    </div>
+    <span class="self-start md:self-auto inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full font-label-lg text-label-lg font-semibold
+      {% if health.ok %}bg-secondary-container text-on-secondary-container{% else %}bg-error-container text-on-error-container{% endif %}">
+      <span class="relative flex w-2.5 h-2.5">
+        {% if health.ok %}<span class="absolute inline-flex w-full h-full bg-secondary opacity-60 animate-ping" style="border-radius:9999px"></span>{% endif %}
+        <span class="relative inline-flex w-2.5 h-2.5 {% if health.ok %}bg-secondary{% else %}bg-error{% endif %}" style="border-radius:9999px"></span>
+      </span>
+      Service IA · {% if health.ok %}en ligne{% else %}hors ligne{% endif %}
+    </span>
+  </div>
+
+  {% if not health.ok %}
+  <div class="flex items-start gap-space-sm p-space-md rounded-xl bg-error-container text-on-error-container font-body-sm text-body-sm">
+    <span class="material-symbols-outlined text-[20px]">error</span>
+    <span><b>Le moteur IA ne répond pas.</b> Les nouvelles demandes restent « en recherche » et le classement des prestataires est indisponible. Lancez <code>uvicorn app.main:app --port 8001</code>.</span>
+  </div>
+  {% endif %}
+
+  <!-- Indicateurs clés -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+    {% for k in kpis %}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <p class="font-label-sm text-label-sm text-outline uppercase font-semibold">{{ k.label }}</p>
+        <p class="font-headline-lg text-headline-lg text-primary font-bold mt-1 truncate">{{ k.value }}</p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ k.sub }}</p>
+      </div>
+      <div class="w-11 h-11 bg-surface-container text-primary flex items-center justify-center shrink-0" style="border-radius:9999px">
+        <span class="material-symbols-outlined text-[22px]">{{ k.icon }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Activité et répartition -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-space-md">
+
+    <section class="xl:col-span-2 bg-surface-container-lowest rounded-xl shadow-sm p-5">
+      <div class="flex items-center justify-between mb-space-md">
+        <div>
+          <h2 class="font-headline-sm text-headline-sm text-on-surface">Rendez-vous créés</h2>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">14 derniers jours</p>
+        </div>
+        <span class="material-symbols-outlined text-primary">bar_chart</span>
+      </div>
+      <div class="flex items-stretch gap-1.5 h-48">
+        {% for d in series %}
+        <div class="flex-1 h-full flex flex-col items-center min-w-0">
+          <span class="font-label-sm text-label-sm text-on-surface-variant h-4">{% if d.n %}{{ d.n }}{% endif %}</span>
+          <div class="flex-1 w-full flex items-end">
+            <div class="w-full rounded-t-lg {% if d.n %}bg-secondary{% else %}bg-surface-container{% endif %}" style="height: {{ d.pct }}%"></div>
+          </div>
+          <span class="font-label-sm text-label-sm text-on-surface-variant mt-1 text-[10px] leading-none">{{ d.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-5">
+      <div class="flex items-center justify-between mb-space-md">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Statuts des rendez-vous</h2>
+        <span class="material-symbols-outlined text-primary">donut_large</span>
+      </div>
+      <div class="flex items-center gap-space-md">
+        <div class="w-32 h-32 flex items-center justify-center shrink-0" style="background: {{ donut }}; border-radius:9999px">
+          <div class="w-[88px] h-[88px] bg-surface-container-lowest flex flex-col items-center justify-center" style="border-radius:9999px">
+            <span class="font-headline-md text-headline-md font-bold text-primary leading-none">{{ appts_total }}</span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant">total</span>
+          </div>
+        </div>
+        <ul class="flex-1 space-y-2 min-w-0">
+          {% for r in status_rows %}
+          <li class="flex items-center justify-between gap-2 font-body-sm text-body-sm">
+            <span class="flex items-center gap-2 min-w-0"><span class="w-2.5 h-2.5 shrink-0" style="background: {{ r.color }}; border-radius:9999px"></span><span class="truncate text-on-surface">{{ r.label }}</span></span>
+            <span class="font-semibold text-on-surface">{{ r.n }} <span class="text-on-surface-variant font-normal">· {{ r.pct }}%</span></span>
+          </li>
+          {% empty %}
+          <li class="font-body-sm text-body-sm text-on-surface-variant">Aucun rendez-vous pour le moment.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- Catégories, prestataires, inscriptions -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-space-md">
+
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-5">
+      <div class="flex items-center justify-between mb-space-md">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Catégories demandées</h2>
+        <span class="material-symbols-outlined text-primary">category</span>
+      </div>
+      <div class="space-y-3">
+        {% for c in categories %}
+        <div>
+          <div class="flex items-center justify-between font-label-md text-label-md text-on-surface"><span>{{ c.label }}</span><span class="font-bold text-secondary">{{ c.n }}</span></div>
+          <div class="h-2 mt-1 rounded-full bg-surface-container overflow-hidden"><div class="h-full rounded-full bg-secondary" style="width: {{ c.pct }}%"></div></div>
+        </div>
+        {% empty %}
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Aucune donnée.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-5">
+      <div class="flex items-center justify-between mb-space-md">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Meilleurs prestataires</h2>
+        <span class="material-symbols-outlined text-primary">military_tech</span>
+      </div>
+      <ul class="divide-y divide-surface-container">
+        {% for p in top_providers %}
+        <li class="flex items-center gap-3 py-2.5">
+          <span class="w-8 h-8 bg-primary-container text-on-primary font-bold flex items-center justify-center shrink-0" style="border-radius:9999px">{{ forloop.counter }}</span>
+          <div class="min-w-0 flex-1">
+            <p class="font-label-lg text-label-lg text-on-surface truncate">{{ p.name }}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">{{ p.done }} intervention{{ p.done|pluralize }} terminée{{ p.done|pluralize }}</p>
+          </div>
+          <span class="flex items-center gap-1 font-label-lg text-label-lg text-on-surface"><span class="material-symbols-outlined text-[16px] text-[#D97706]">star</span>{% if p.rating %}{{ p.rating|floatformat:1 }}{% else %}—{% endif %}</span>
+        </li>
+        {% empty %}
+        <li class="py-3 font-body-sm text-body-sm text-on-surface-variant">Aucune intervention terminée pour le moment.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-5">
+      <div class="flex items-center justify-between mb-space-md">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Dernières inscriptions</h2>
+        <a href="{% url 'admin:index' %}" class="font-label-md text-label-md text-secondary hover:underline">Gérer</a>
+      </div>
+      <ul class="divide-y divide-surface-container">
+        {% for u in latest_users %}
+        <li class="flex items-center gap-3 py-2.5">
+          <div class="w-9 h-9 bg-secondary text-on-secondary flex items-center justify-center font-label-lg font-bold shrink-0" style="border-radius:9999px">{{ u.username|slice:":1"|upper }}</div>
+          <div class="min-w-0 flex-1">
+            <p class="font-label-lg text-label-lg text-on-surface truncate">{{ u.get_full_name|default:u.username }}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ u.email|default:u.username }} · il y a {{ u.date_joined|timesince }}</p>
+          </div>
+          <span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full font-semibold {% if u.role == 'provider' %}bg-secondary-container text-on-secondary-container{% else %}bg-surface-container text-primary{% endif %}">{{ u.get_role_display }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+
+  <!-- Derniers rendez-vous -->
+  <section class="bg-surface-container-lowest rounded-xl shadow-sm p-5">
+    <div class="flex items-center justify-between mb-space-md">
+      <div>
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Derniers rendez-vous</h2>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Les 8 plus récents</p>
+      </div>
+      <a href="{% url 'admin:index' %}" class="font-label-md text-label-md text-secondary hover:underline">Tout voir</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="text-outline font-label-sm text-label-sm uppercase">
+            <th class="py-2 pr-4 font-semibold">N°</th>
+            <th class="py-2 pr-4 font-semibold">Client</th>
+            <th class="py-2 pr-4 font-semibold">Prestataire</th>
+            <th class="py-2 pr-4 font-semibold">Service</th>
+            <th class="py-2 pr-4 font-semibold">Date</th>
+            <th class="py-2 pr-4 font-semibold">Statut</th>
+            <th class="py-2 text-right font-semibold">Montant</th>
+          </tr>
+        </thead>
+        <tbody class="font-body-md text-body-md text-on-surface">
+          {% for a in latest_appointments %}
+          <tr class="border-t border-surface-container hover:bg-surface-container-low transition-colors">
+            <td class="py-3 pr-4 text-on-surface-variant">#{{ a.pk }}</td>
+            <td class="py-3 pr-4">{{ a.client.get_full_name|default:a.client.username }}</td>
+            <td class="py-3 pr-4">{% if a.provider %}{{ a.provider.get_full_name|default:a.provider.username }}{% else %}<span class="text-on-surface-variant">Non attribué</span>{% endif %}</td>
+            <td class="py-3 pr-4">{{ a.service.name }}</td>
+            <td class="py-3 pr-4 whitespace-nowrap">{{ a.date|date:"d/m/Y" }} <span class="text-on-surface-variant">· {{ a.time_slot }}</span></td>
+            <td class="py-3 pr-4">{% include "appointments/_status_badge.html" with appointment=a %}</td>
+            <td class="py-3 text-right font-semibold text-secondary whitespace-nowrap">{{ a.total_price|floatformat:2 }} DT</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="py-8 text-center text-on-surface-variant">Aucun rendez-vous pour le moment.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

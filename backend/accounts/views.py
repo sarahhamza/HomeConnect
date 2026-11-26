@@ -54,6 +54,8 @@ def profile(request):
 
 @login_required
 def post_login(request):
+    if request.user.is_staff:
+        return redirect("admin_dashboard")
     if request.user.role == "client":
         return redirect("client_dashboard")
     return redirect("provider_dashboard")
