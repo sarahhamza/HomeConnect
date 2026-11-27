@@ -1,0 +1,177 @@
+{% extends "admin/base_site.html" %}
+{% comment %}
+  Admin Django avec la même barre du haut et la même barre latérale que l'application
+  (base_dashboard.html + base_admin.html). À placer dans templates/admin/base_site.html.
+{% endcomment %}
+
+{% block extrahead %}{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+  /* ---------- Palette de l'application, forcée aussi en mode sombre ---------- */
+  :root, html[data-theme="light"], html[data-theme="dark"] {
+    color-scheme: light;
+    --primary: #1f4e79; --secondary: #1f4e79; --accent: #97f3b5; --primary-fg: #ffffff;
+    --body-fg: #111c2d; --body-bg: #f9f9ff; --body-quiet-color: #42474f; --body-medium-color: #42474f; --body-loud-color: #00375e;
+    --header-color: #00375e; --header-branding-color: #00375e; --header-bg: #ffffff; --header-link-color: #00375e;
+    --breadcrumbs-fg: #42474f; --breadcrumbs-link-fg: #00375e; --breadcrumbs-bg: #f0f3ff;
+    --link-fg: #00375e; --link-hover-color: #006d3d; --link-selected-fg: #006d3d;
+    --hairline-color: #e7eeff; --border-color: #c2c7d0; --darkened-bg: #f0f3ff; --selected-bg: #e7eeff; --selected-row: #d1e4ff;
+    --button-fg: #ffffff; --button-bg: #1f4e79; --button-hover-bg: #00375e;
+    --default-button-bg: #006d3d; --default-button-hover-bg: #00522d;
+    --close-button-bg: #72777f; --close-button-hover-bg: #42474f;
+    --delete-button-bg: #ba1a1a; --delete-button-hover-bg: #93000a;
+    --object-tools-fg: #ffffff; --object-tools-bg: #1f4e79; --object-tools-hover-bg: #00375e;
+    --error-fg: #ba1a1a; --message-success-bg: #97f3b5; --message-warning-bg: #fef3c7; --message-error-bg: #ffdad6;
+  }
+  html, body { font-family: "Inter", system-ui, sans-serif; font-size: 14px; background: #f9f9ff; }
+  .theme-toggle { display: none !important; }
+  .material-symbols-outlined { font-family: "Material Symbols Outlined"; font-weight: normal; font-style: normal;
+    line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; font-size: 20px;
+    -webkit-font-feature-settings: "liga"; font-feature-settings: "liga"; vertical-align: middle; flex-shrink: 0; }
+
+  /* ---------- Barre du haut (identique à base_dashboard.html) ---------- */
+  .hc-top { position: fixed; top: 0; left: 0; right: 0; height: 80px; z-index: 50; background: #fff;
+    box-shadow: 0 1px 8px rgba(0,0,0,.04); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+  .hc-left, .hc-right { display: flex; align-items: center; gap: 16px; }
+  .hc-brand, .hc-brand:link, .hc-brand:visited { display: flex; align-items: center; gap: 8px; color: #00375e; font-size: 18px;
+    font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+  .hc-brand .material-symbols-outlined { font-size: 28px; }
+  .hc-pills { background: #e7eeff; padding: 4px 8px; border-radius: 12px; }
+  .hc-pills span { display: block; background: #fff; color: #00375e; font-size: 11px; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; padding: 4px 8px; border-radius: 12px; }
+  .hc-btn, .hc-btn:link, .hc-btn:visited { display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 0 16px;
+    border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .hc-btn:hover { opacity: .92; }
+  .hc-btn .material-symbols-outlined { font-size: 18px; }
+  .hc-btn.green { background: #006d3d; } .hc-btn.blue { background: #1f4e79; }
+  .hc-icon { position: relative; display: flex; padding: 4px; border-radius: 8px; color: #42474f; }
+  .hc-icon:hover { background: #e7eeff; color: #111c2d; }
+  .hc-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #ba1a1a; border-radius: 9999px; box-shadow: 0 0 0 2px #fff; }
+  .hc-user, .hc-user:link, .hc-user:visited { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; text-decoration: none; }
+  .hc-user:hover { background: #e7eeff; }
+  .hc-avatar { width: 32px; height: 32px; border-radius: 9999px; background: #006d3d; color: #fff; display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 14px; object-fit: cover; }
+  .hc-user div { display: flex; flex-direction: column; text-align: left; line-height: 1.25; }
+  .hc-user b { font-size: 12px; font-weight: 600; color: #111c2d; } .hc-user small { font-size: 11px; font-weight: 500; color: #006d3d; }
+  .hc-logout { background: none; border: 0; cursor: pointer; display: flex; padding: 4px; border-radius: 8px; color: #42474f; }
+  .hc-logout:hover { background: #e7eeff; color: #111c2d; }
+
+  /* ---------- Fil d'Ariane = bande sous la barre du haut ---------- */
+  body:not(.popup) nav[aria-label] { position: fixed; top: 80px; left: 0; right: 0; z-index: 40; }
+  body:not(.popup) .breadcrumbs { height: 48px; margin: 0; padding: 0 32px; display: flex; align-items: center; background: #f0f3ff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.02); font-size: 12px; font-weight: 500; text-transform: none; list-style: none; }
+  body:not(.popup) .breadcrumbs a:link, body:not(.popup) .breadcrumbs a:visited { color: #42474f; }
+  body:not(.popup) .breadcrumbs li[aria-current] { color: #00375e; font-weight: 600; }
+  body:not(.popup) .breadcrumbs::after { content: "Supervision de la plateforme"; margin-left: auto; background: #97f3b5; color: #047240;
+    font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 12px; }
+
+  .hc-bar { position: fixed; top: 80px; left: 0; right: 0; z-index: 40; height: 48px; padding: 0 32px; display: flex; align-items: center;
+    gap: 8px; background: #f0f3ff; box-shadow: 0 1px 4px rgba(0,0,0,.02); font-size: 12px; font-weight: 500; color: #42474f; }
+  .hc-bar b { color: #00375e; font-weight: 600; }
+  .hc-bar em { margin-left: auto; font-style: normal; background: #97f3b5; color: #047240; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 12px; }
+
+  /* ---------- Barre latérale (identique à base_admin.html) ---------- */
+  .hc-side { box-sizing: border-box; position: fixed; left: 0; top: 128px; bottom: 0; width: 256px; z-index: 30; background: #fff; padding: 16px;
+    box-shadow: 0 1px 8px rgba(0,0,0,.04); display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; }
+  .hc-side a:link, .hc-side a:visited { display: flex; align-items: center; gap: 8px; padding: 8px 16px; margin-bottom: 4px;
+    border-radius: 8px; color: #42474f; font-size: 14px; font-weight: 600; text-decoration: none; }
+  .hc-side a:hover { background: #e7eeff; color: #111c2d; }
+  .hc-side a.on:link, .hc-side a.on:visited { background: #1f4e79; color: #fff; }
+  .hc-card { background: #f0f3ff; border-radius: 8px; padding: 16px; }
+  .hc-card p { margin: 0; display: flex; align-items: center; gap: 4px; color: #006d3d; font-size: 14px; font-weight: 600; }
+  .hc-card .material-symbols-outlined { font-size: 18px; }
+  .hc-card small { display: block; margin-top: 4px; color: #42474f; font-size: 13px; line-height: 18px; }
+  #nav-sidebar, .toggle-nav-sidebar { display: none !important; }
+  .hc-top a, .hc-side a { text-decoration: none !important; }      /* Django souligne tous les liens hors #header */
+  body:not(.popup) #container { margin-left: 256px; width: calc(100% - 256px); min-width: 0; padding-top: 128px; }
+  @media (max-width: 1023px) { .hc-side, .hc-btn.green { display: none; } body:not(.popup) #container { margin-left: 0; width: 100%; } }
+
+  /* ---------- Contenu ---------- */
+  #content { padding: 24px 32px; }
+  #content h1 { font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; color: #00375e; }
+  .module { background: #fff; border: 0; border-radius: 8px; box-shadow: 0 1px 8px rgba(0,0,0,.06); overflow: hidden; margin-bottom: 24px; }
+  .module h2, .module caption, .inline-group h2, fieldset .fieldset-heading, fieldset > h2 { background: #1f4e79; color: #fff; font-size: 13px;
+    font-weight: 600; letter-spacing: .02em; text-transform: none; padding: 10px 16px; }
+  .module h2 a:link, .module h2 a:visited, .module caption a:link, .module caption a:visited, a.section:link, a.section:visited,
+  fieldset .fieldset-heading { color: #fff; }
+  #changelist .results, #changelist table { border-radius: 8px; }
+  thead th, #changelist table thead th { background: #f0f3ff; color: #42474f; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; border-bottom: 1px solid #d8e3fb; }
+  thead th a:link, thead th a:visited { color: #42474f; }
+  tbody tr:hover td, tbody tr:hover th { background: #f0f3ff; }
+  td, th { border-bottom: 1px solid #e7eeff; }
+  #changelist-filter { background: #fff; border: 0; border-radius: 8px; box-shadow: 0 1px 8px rgba(0,0,0,.06); }
+  #changelist-filter h2 { background: #f0f3ff; color: #00375e; border-radius: 8px 8px 0 0; }
+  #changelist-filter li.selected a { color: #006d3d; font-weight: 600; }
+  #changelist .actions { background: #f0f3ff; border-radius: 8px; padding: 10px 16px; }
+  .button, input[type=submit], input[type=button], .submit-row input, a.button, .object-tools a { border-radius: 8px;
+    font-family: "Inter", sans-serif; font-weight: 600; font-size: 14px; }
+  .object-tools a { padding: 8px 16px; }
+  .submit-row { background: #fff; border: 0; border-radius: 8px; box-shadow: 0 1px 8px rgba(0,0,0,.06); }
+  input[type=text], input[type=password], input[type=email], input[type=number], input[type=url], input[type=date],
+  input[type=time], textarea, select, .vTextField { border: 1px solid #c2c7d0; border-radius: 8px; padding: 8px 10px; background: #fff; color: #111c2d; }
+  input:focus, textarea:focus, select:focus { border-color: #006d3d; outline: 2px solid #97f3b5; }
+  fieldset.module { padding: 0 0 8px; }
+  .form-row { border-bottom: 1px solid #e7eeff; }
+  ul.messagelist li { border-radius: 8px; font-weight: 500; }
+  ul.messagelist li.success { color: #047240; } ul.messagelist li.error { color: #93000a; }
+
+  /* ---------- Page de connexion (pas de barre latérale) ---------- */
+  #header { height: 64px; padding: 0 32px; box-shadow: 0 1px 8px rgba(0,0,0,.06); align-items: center; }
+  #site-name a:link, #site-name a:visited { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: #00375e; }
+  .hc-badge { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; background: #97f3b5; color: #047240;
+    padding: 3px 10px; border-radius: 9999px; }
+  .login #container { margin-top: 10vh; border-radius: 12px; border: 0; box-shadow: 0 4px 24px rgba(0,55,94,.12); overflow: hidden; }
+  .login #header { justify-content: center; }
+  .login .submit-row { box-shadow: none; padding-left: 0; }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}"><span class="material-symbols-outlined" style="font-size:28px">home_repair_service</span>HomeConnect<span class="hc-badge">Administration</span></a>
+</div>
+{% endblock %}
+
+{% block header %}
+{% if user.is_authenticated and user.is_staff %}
+{% url 'admin_dashboard' as dash_url %}{% url 'ai_dashboard' as ai_url %}{% url 'home' as home_url %}{% url 'profile' as profile_url %}{% url 'logout' as logout_url %}
+<header class="hc-top">
+  <div class="hc-left">
+    <a href="{{ home_url|default:'/' }}" class="hc-brand"><span class="material-symbols-outlined">home_repair_service</span>HomeConnect</a>
+    <div class="hc-pills"><span>Administration</span></div>
+  </div>
+  <div class="hc-right">
+    <a href="{% url 'admin:index' %}" class="hc-btn green"><span class="material-symbols-outlined">database</span>Gestion des données</a>
+    {% if dash_url %}<a href="{{ dash_url }}" class="hc-btn blue"><span class="material-symbols-outlined">dashboard</span>Administration</a>{% endif %}
+    <span class="hc-icon"><span class="material-symbols-outlined">notifications</span><span class="hc-dot"></span></span>
+    <a href="{{ profile_url|default:'#' }}" class="hc-user">
+      {% if user.avatar %}<img class="hc-avatar" src="{{ user.avatar.url }}" alt="">{% else %}<span class="hc-avatar">{{ user.get_username|slice:":1"|upper }}</span>{% endif %}
+      <div><b>{{ user.get_full_name|default:user.get_username }}</b><small>Administrateur</small></div>
+    </a>
+    <form method="post" action="{{ logout_url|default:'/admin/logout/' }}" style="margin:0">{% csrf_token %}
+      <button type="submit" class="hc-logout" title="Déconnexion"><span class="material-symbols-outlined">logout</span></button>
+    </form>
+  </div>
+</header>
+{% url 'admin:index' as admin_home %}
+{% if request.path == admin_home %}
+<div class="hc-bar"><a href="{{ home_url|default:'/' }}">Accueil</a><span>›</span><b>Gestion des données</b><em>Supervision de la plateforme</em></div>
+{% endif %}
+
+<aside class="hc-side">
+ <nav>
+  {% if dash_url %}<a href="{{ dash_url }}"><span class="material-symbols-outlined">dashboard</span>Tableau de bord</a>{% endif %}
+  {% if ai_url %}<a href="{{ ai_url }}"><span class="material-symbols-outlined">auto_awesome</span>Service IA</a>{% endif %}
+  <a href="{% url 'admin:index' %}" class="on"><span class="material-symbols-outlined">database</span>Gestion des données</a>
+  <a href="{{ home_url|default:'/' }}"><span class="material-symbols-outlined">home</span>Retour à l'accueil</a>
+  <a href="{{ profile_url|default:'#' }}"><span class="material-symbols-outlined">account_circle</span>Mon profil</a>
+ </nav>
+ <div class="hc-card"><p><span class="material-symbols-outlined">admin_panel_settings</span>Zone d'administration</p>
+ <small>Les modifications faites ici sont appliquées immédiatement sur la plateforme.</small></div>
+</aside>
+{% else %}{{ block.super }}{% endif %}
+{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}

@@ -1,39 +1,11 @@
 {% extends "base_admin.html" %}
 {% block title %}Service IA · HomeConnect{% endblock %}
 
-{% block role_pills %}
-  <span class="px-space-sm py-space-xs rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm uppercase tracking-wider font-semibold">Supervision</span>
-{% endblock %}
-
 {% block header_action %}
   <a href="{% url 'ai_dashboard' %}"
      class="hidden sm:inline-flex items-center gap-space-xs h-10 px-space-md rounded-xl border border-outline-variant text-primary font-label-lg text-label-lg hover:bg-surface-container transition-all">
     <span class="material-symbols-outlined text-[18px]">refresh</span>Actualiser
   </a>
-{% endblock %}
-
-{% block space_label %}Service IA{% endblock %}
-{% block support_label %}Matching automatique{% endblock %}
-
-{% block sidebar_nav %}
-  <a href="{% url 'ai_dashboard' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg bg-surface-container text-primary">
-    <span class="material-symbols-outlined text-[20px]">auto_awesome</span>Service IA
-  </a>
-  <a href="{% url 'home' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
-    <span class="material-symbols-outlined text-[20px]">home</span>Retour à l'accueil
-  </a>
-  <a href="{% url 'profile' %}" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
-    <span class="material-symbols-outlined text-[20px]">account_circle</span>Mon profil
-  </a>
-{% endblock %}
-
-{% block sidebar_card %}
-  <div class="p-space-md rounded-xl bg-surface-container-low">
-    <p class="font-label-lg text-label-lg flex items-center gap-space-xs {% if health.ok %}text-secondary{% else %}text-error{% endif %}">
-      <span class="material-symbols-outlined text-[18px]">{% if health.ok %}check_circle{% else %}error{% endif %}</span>{% if health.ok %}Moteur en ligne{% else %}Moteur hors ligne{% endif %}
-    </p>
-    <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% if health.ok %}Les demandes sont attribuées en temps réel.{% else %}Les demandes restent « en recherche » et sont relancées automatiquement.{% endif %}</p>
-  </div>
 {% endblock %}
 
 {% block content %}

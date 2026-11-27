@@ -47,10 +47,13 @@ def profile(request):
     return render(request, "accounts/profile.html", {
         "form": profile_form,
         "password_form": password_form,
-        "base_template": ("base_provider.html" if request.user.role == "provider"
-                          else "base_client.html"),
+        "base_template": _base_template(request.user),
     })
 
+def _base_template(user):
+    if user.is_staff or user.role == "admin":
+        return "base_admin.html"
+    return "base_provider.html" if user.role == "provider" else "base_client.html"
 
 @login_required
 def post_login(request):

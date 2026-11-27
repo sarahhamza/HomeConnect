@@ -30,7 +30,7 @@
         <h2 class="mt-space-md font-headline-sm text-headline-sm text-on-surface">{{ user.get_full_name|default:user.username }}</h2>
         <p class="font-body-sm text-body-sm text-on-surface-variant">@{{ user.username }}</p>
         <span class="inline-flex items-center gap-1 mt-space-sm px-space-md py-space-xs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
-          <span class="material-symbols-outlined text-[14px]">verified_user</span>{{ user.get_role_display }}
+          <span class="material-symbols-outlined text-[14px]">verified_user</span>{% if user.is_staff %}Administrateur{% else %}{{ user.get_role_display }}{% endif %}
         </span>
 
         <dl class="mt-space-lg space-y-space-sm text-left font-body-sm text-body-sm">
